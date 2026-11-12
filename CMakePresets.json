@@ -1,0 +1,87 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "release",
+      "displayName": "Release",
+      "description": "Optimized release build (-O2, LTO)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SIGNAL_PROCESSOR_LANGUAGE": "ru",
+        "SIGNAL_PROCESSOR_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "description": "Unoptimized development build",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-dev",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SIGNAL_PROCESSOR_LANGUAGE": "ru",
+        "SIGNAL_PROCESSOR_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "windows",
+      "displayName": "Windows (MinGW-w64, static Qt)",
+      "description": "Cross build of a self-contained SignalProcessor.exe via cmake/mingw-static.cmake",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-win",
+      "toolchainFile": "${sourceDir}/cmake/mingw-static.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SIGNAL_PROCESSOR_LANGUAGE": "ru",
+        "SIGNAL_PROCESSOR_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "san",
+      "displayName": "Debug + ASan/UBSan",
+      "description": "Debug build with address and undefined behavior sanitizers",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-san",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SIGNAL_PROCESSOR_LANGUAGE": "ru",
+        "SIGNAL_PROCESSOR_WARNINGS_AS_ERRORS": "ON",
+        "SIGNAL_PROCESSOR_SANITIZERS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "windows",
+      "configurePreset": "windows"
+    },
+    {
+      "name": "san",
+      "configurePreset": "san"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

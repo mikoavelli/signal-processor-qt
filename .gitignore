@@ -1,0 +1,16 @@
+build/
+build-dev/
+build-san/
+build-win/
+build/package/
+dist/
+/CMakeUserPresets.json
+*.tmp
+settings.corrupted-*.json
+measurements.db
+.ccache/
+compile_commands.json
+.vscode/
+.idea/
+__pycache__/
+*.user
