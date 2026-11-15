@@ -149,15 +149,12 @@ void TestCalculation::validatesResistance() {
     const auto [signalNoisePath, noisePath] = writeSpectrumFiles(dir);
     const sp::AppConfig config = makeMockConfig();
 
-    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
-                                       sp::MeasurementKind::Voltage, std::nullopt),
-                             CalculationError);
-    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
-                                       sp::MeasurementKind::Voltage, 0.0),
-                             CalculationError);
-    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
-                                       sp::MeasurementKind::Voltage, -10.0),
-                             CalculationError);
+    QVERIFY_THROWS_EXCEPTION(CalculationError, calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, std::nullopt));
+    QVERIFY_THROWS_EXCEPTION(CalculationError, calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, 0.0));
+    QVERIFY_THROWS_EXCEPTION(CalculationError, calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, -10.0));
 }
 
 void TestCalculation::validatesCategoryIndex() {
@@ -165,12 +162,10 @@ void TestCalculation::validatesCategoryIndex() {
     const auto [signalNoisePath, noisePath] = writeSpectrumFiles(dir);
     const sp::AppConfig config = makeMockConfig();
 
-    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, -1, sp::LineType::Power,
-                                       sp::MeasurementKind::Voltage, 50.0),
-                             CalculationError);
-    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 10, sp::LineType::Power,
-                                       sp::MeasurementKind::Voltage, 50.0),
-                             CalculationError);
+    QVERIFY_THROWS_EXCEPTION(CalculationError, calculate(signalNoisePath, noisePath, config, -1, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, 50.0));
+    QVERIFY_THROWS_EXCEPTION(CalculationError, calculate(signalNoisePath, noisePath, config, 10, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, 50.0));
 }
 
 void TestCalculation::validatesConstantsCountMismatch() {
@@ -182,9 +177,8 @@ void TestCalculation::validatesConstantsCountMismatch() {
     }
     const sp::AppConfig config = makeMockConfig(20, 2.0, 1000.0, frequencies);
 
-    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
-                                       sp::MeasurementKind::Voltage, 50.0),
-                             CalculationError);
+    QVERIFY_THROWS_EXCEPTION(CalculationError, calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, 50.0));
 }
 
 void TestCalculation::intermediateUAllLineTypes() {
@@ -200,8 +194,7 @@ void TestCalculation::calculateWIdentity() {
 
 void TestCalculation::intermediateUZeroDivisionGuard() {
     // Deliberately passing zero pointIndex: the guard is about the error, not the index.
-    QVERIFY_EXCEPTION_THROWN(calculateQ(5.0, 0.0, sp::MeasurementKind::Voltage, 50.0, 0),
-                             CalculationError);
+    QVERIFY_THROWS_EXCEPTION(CalculationError, calculateQ(5.0, 0.0, sp::MeasurementKind::Voltage, 50.0, 0));
 }
 
 void TestCalculation::rejectsNegativeFrequencyConstant() {
@@ -229,9 +222,8 @@ void TestCalculation::rejectsNegativeFrequencyConstant() {
     }
     const sp::AppConfig config = makeMockConfig(20, 100.0, 1000.0, frequencies);
 
-    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
-                                       sp::MeasurementKind::Voltage, 50.0),
-                             CalculationError);
+    QVERIFY_THROWS_EXCEPTION(CalculationError, calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, 50.0));
 }
 
 void TestCalculation::rejectsExcessiveResistanceLimit() {
@@ -239,9 +231,8 @@ void TestCalculation::rejectsExcessiveResistanceLimit() {
     const auto [signalNoisePath, noisePath] = writeSpectrumFiles(dir);
     const sp::AppConfig config = makeMockConfig();
 
-    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
-                                       sp::MeasurementKind::Voltage, 1e12),
-                             CalculationError);
+    QVERIFY_THROWS_EXCEPTION(CalculationError, calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, 1e12));
 }
 
 QTEST_APPLESS_MAIN(TestCalculation)

@@ -95,7 +95,7 @@ void TestDatabase::initCreatesTablesAndIndex() {
 
 void TestDatabase::initInvalidPathThrows() {
     QTemporaryDir dir;
-    QVERIFY_EXCEPTION_THROWN(initDatabase(dir.path()), DatabaseError);
+    QVERIFY_THROWS_EXCEPTION(DatabaseError, initDatabase(dir.path()));
 }
 
 void TestDatabase::savePersistsData() {
@@ -150,11 +150,10 @@ void TestDatabase::rejectsNonPositiveLineNumber() {
     initDatabase(dbPath);
     const sp::CalculationResult result = makeMockResult();
 
-    QVERIFY_EXCEPTION_THROWN(saveMeasurement(dbPath, QStringLiteral("Device"), 1, 0,
+    QVERIFY_THROWS_EXCEPTION(DatabaseError, saveMeasurement(dbPath, QStringLiteral("Device"), 1, 0,
                                              QStringLiteral("Line 1"), sp::LineType::Power,
                                              QStringLiteral("XX"), QStringLiteral("voltage"), 50.0,
-                                             result),
-                             DatabaseError);
+                                             result));
 }
 
 void TestDatabase::rejectsInvalidCategory() {
@@ -163,11 +162,10 @@ void TestDatabase::rejectsInvalidCategory() {
     initDatabase(dbPath);
     const sp::CalculationResult result = makeMockResult();
 
-    QVERIFY_EXCEPTION_THROWN(saveMeasurement(dbPath, QStringLiteral("Device"), -1, 1,
+    QVERIFY_THROWS_EXCEPTION(DatabaseError, saveMeasurement(dbPath, QStringLiteral("Device"), -1, 1,
                                              QStringLiteral("Line 1"), sp::LineType::Power,
                                              QStringLiteral("XX"), QStringLiteral("voltage"), 50.0,
-                                             result),
-                             DatabaseError);
+                                             result));
 }
 
 QTEST_MAIN(TestDatabase)

@@ -87,7 +87,7 @@ void TestSpectrumReader::malformedLines() {
 void TestSpectrumReader::fileNotFound() {
     QTemporaryDir dir;
     const QString path = dir.filePath(QStringLiteral("missing.txt"));
-    QVERIFY_EXCEPTION_THROWN(readRequiredFrequencies(path, {100.0}), SpectrumNotFoundError);
+    QVERIFY_THROWS_EXCEPTION(SpectrumNotFoundError, readRequiredFrequencies(path, {100.0}));
 }
 
 void TestSpectrumReader::missingFrequencies() {
@@ -107,7 +107,7 @@ void TestSpectrumReader::emptyRequest() {
     QTemporaryDir dir;
     const QString path =
         writeFile(dir, QStringLiteral("valid.txt"), QStringLiteral("100.0\t1.0\n"));
-    QVERIFY_EXCEPTION_THROWN(readRequiredFrequencies(path, {}), CalculationError);
+    QVERIFY_THROWS_EXCEPTION(CalculationError, readRequiredFrequencies(path, {}));
 }
 
 void TestSpectrumReader::negativeFrequencyRecord() {
@@ -115,7 +115,7 @@ void TestSpectrumReader::negativeFrequencyRecord() {
     QTemporaryDir dir;
     const QString path =
         writeFile(dir, QStringLiteral("negative_f.txt"), QStringLiteral("-500.0\t1.5\n"));
-    QVERIFY_EXCEPTION_THROWN(readRequiredFrequencies(path, {-500.0}), SpectrumFormatError);
+    QVERIFY_THROWS_EXCEPTION(SpectrumFormatError, readRequiredFrequencies(path, {-500.0}));
 }
 
 void TestSpectrumReader::negativeVoltageRecord() {
@@ -123,7 +123,7 @@ void TestSpectrumReader::negativeVoltageRecord() {
     QTemporaryDir dir;
     const QString path =
         writeFile(dir, QStringLiteral("negative_v.txt"), QStringLiteral("500.0\t-2.5\n"));
-    QVERIFY_EXCEPTION_THROWN(readRequiredFrequencies(path, {500.0}), SpectrumFormatError);
+    QVERIFY_THROWS_EXCEPTION(SpectrumFormatError, readRequiredFrequencies(path, {500.0}));
 }
 
 void TestSpectrumReader::conflictingDuplicateRecords() {
@@ -131,7 +131,7 @@ void TestSpectrumReader::conflictingDuplicateRecords() {
     QTemporaryDir dir;
     const QString path = writeFile(dir, QStringLiteral("duplicates.txt"),
                                    QStringLiteral("500.0\t1.0\n500.0\t9.0\n"));
-    QVERIFY_EXCEPTION_THROWN(readRequiredFrequencies(path, {500.0}), SpectrumFormatError);
+    QVERIFY_THROWS_EXCEPTION(SpectrumFormatError, readRequiredFrequencies(path, {500.0}));
 }
 
 QTEST_APPLESS_MAIN(TestSpectrumReader)

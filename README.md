@@ -127,6 +127,13 @@ Two ways to produce a Windows build:
    prompt (or after `vcvars64.bat`): `cmake --preset release &&
    cmake --build --preset release`. `windeployqt` deploys the Qt runtime.
 
+## CI
+
+GitHub Actions runs on every push to `main` and every pull request:
+
+- **Linux** — configure+build `release`, run the `ctest` suite.
+- **Windows** — configure+build with MSVC, run the tests, deploy `SignalProcessor.exe` with its Qt DLLs via `windeployqt` and upload the bundle as an artifact.
+
 ## License
 
 MIT (see [LICENSE](LICENSE)).

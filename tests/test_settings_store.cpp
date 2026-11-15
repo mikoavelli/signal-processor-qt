@@ -116,15 +116,13 @@ void TestSettingsStore::loadValidConfig() {
 
 void TestSettingsStore::missingFileThrows() {
     QTemporaryDir dir;
-    QVERIFY_EXCEPTION_THROWN(
-        sp::settings_store::loadConfig(dir.filePath(QStringLiteral("absent.json"))),
-        ConfigNotFoundError);
+    QVERIFY_THROWS_EXCEPTION(ConfigNotFoundError, sp::settings_store::loadConfig(dir.filePath(QStringLiteral("absent.json"))));
 }
 
 void TestSettingsStore::syntaxErrorThrows() {
     QTemporaryDir dir;
     const QString path = writeRawConfig(dir, QByteArray("broken = [unclosed"));
-    QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
+    QVERIFY_THROWS_EXCEPTION(ConfigValidationError, sp::settings_store::loadConfig(path));
 }
 
 void TestSettingsStore::zeroNumberOfConstantsThrows() {
@@ -134,7 +132,7 @@ void TestSettingsStore::zeroNumberOfConstantsThrows() {
     frequency.insert(QStringLiteral("number_of_constants"), 0);
     document.insert(QStringLiteral("frequency_constants"), frequency);
     const QString path = writeConfig(dir, document);
-    QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
+    QVERIFY_THROWS_EXCEPTION(ConfigValidationError, sp::settings_store::loadConfig(path));
 }
 
 void TestSettingsStore::constantsLengthMismatchThrows() {
@@ -144,7 +142,7 @@ void TestSettingsStore::constantsLengthMismatchThrows() {
     frequency.insert(QStringLiteral("f_i"), QJsonArray{500.0});
     document.insert(QStringLiteral("frequency_constants"), frequency);
     const QString path = writeConfig(dir, document);
-    QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
+    QVERIFY_THROWS_EXCEPTION(ConfigValidationError, sp::settings_store::loadConfig(path));
 }
 
 void TestSettingsStore::nonNumericFloatListThrows() {
@@ -154,7 +152,7 @@ void TestSettingsStore::nonNumericFloatListThrows() {
     frequency.insert(QStringLiteral("f_i"), QJsonArray{QStringLiteral("text")});
     document.insert(QStringLiteral("frequency_constants"), frequency);
     const QString path = writeConfig(dir, document);
-    QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
+    QVERIFY_THROWS_EXCEPTION(ConfigValidationError, sp::settings_store::loadConfig(path));
 }
 
 void TestSettingsStore::lineNoiseLengthMismatchThrows() {
@@ -164,7 +162,7 @@ void TestSettingsStore::lineNoiseLengthMismatchThrows() {
     noise.insert(QStringLiteral("symmetrical"), QJsonArray{1.0, 2.0});
     document.insert(QStringLiteral("norm_noise_by_line"), noise);
     const QString path = writeConfig(dir, document);
-    QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
+    QVERIFY_THROWS_EXCEPTION(ConfigValidationError, sp::settings_store::loadConfig(path));
 }
 
 void TestSettingsStore::projectRootSettingsIsValid() {
@@ -183,7 +181,7 @@ void TestSettingsStore::negativeFrequenciesThrow() {
     frequency.insert(QStringLiteral("f_i"), QJsonArray{-500.0});
     document.insert(QStringLiteral("frequency_constants"), frequency);
     const QString path = writeConfig(dir, document);
-    QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
+    QVERIFY_THROWS_EXCEPTION(ConfigValidationError, sp::settings_store::loadConfig(path));
 }
 
 void TestSettingsStore::negativeNormNoiseThrows() {
@@ -193,7 +191,7 @@ void TestSettingsStore::negativeNormNoiseThrows() {
     noise.insert(QStringLiteral("symmetrical"), QJsonArray{-1.5});
     document.insert(QStringLiteral("norm_noise_by_line"), noise);
     const QString path = writeConfig(dir, document);
-    QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
+    QVERIFY_THROWS_EXCEPTION(ConfigValidationError, sp::settings_store::loadConfig(path));
 }
 
 void TestSettingsStore::emptyOperationModesThrow() {
@@ -201,7 +199,7 @@ void TestSettingsStore::emptyOperationModesThrow() {
     QJsonObject document = validDocument();
     document.insert(QStringLiteral("operation_modes"), QJsonArray{});
     const QString path = writeConfig(dir, document);
-    QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
+    QVERIFY_THROWS_EXCEPTION(ConfigValidationError, sp::settings_store::loadConfig(path));
 }
 
 QTEST_APPLESS_MAIN(TestSettingsStore)
