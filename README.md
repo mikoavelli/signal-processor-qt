@@ -3,7 +3,7 @@
 Qt 6 / C++23 rewrite of **signal-processor** — a desktop application for the
 spectrum analysis of communication lines. This repository contains **only the
 Qt/C++ application**; the Python implementation lives in its own repository
-(`~/Projects/signal-processor`) and is untouched.
+and is untouched.
 
 The application reads two text spectra (the mixture *Signal + Noise* and the
 *Own noise*), computes the per-point signal level and the q ratio against the
@@ -14,52 +14,40 @@ category before measurement.
 
 All interface strings are compiled into the binary from a Qt resource
 (`resources/i18n/{ru,en}.json`). The default language is **Russian**
-(`SIGNAL_PROCESSOR_LANGUAGE=ru`); a release in another language is produced by
+(`SIGNAL_PROCESSOR_LANGUAGE=ru`); a build in another language is produced by
 changing that CMake option.
 
 ## Requirements
 
-- C++23 compiler (GCC 11+ / Clang 14+ / MSVC 2022)
+- C++23 compiler (GCC 11+ / Clang 14+)
 - Qt 6 (6.12 recommended) with the **Widgets** and **Sql** modules
-- CMake 3.21+
-- Ninja (used by the presets)
-- (optional) `just` — the `justfile` wraps the common commands
-- (optional) MinGW-w64 + static Qt for the Windows cross build
-  (see *Windows (cross build)* below)
+- CMake 3.21+ and Ninja
+- (optional) MinGW-w64 + a static Qt 6 for the Windows cross build
+  (see *Windows* below)
 
 ## Build
+
+`CMakePresets.json` provides `release` (`-O2` + LTO), `debug` and `windows`
+(MinGW-w64 cross) configurations; all of them build with compiler warnings as
+errors.
 
 ```sh
 cmake --preset release
 cmake --build --preset release
-just settings   # copy settings.json next to every configured binary
+cp settings.json build/      # settings.json must sit next to the binary
 ```
 
-The produced `build/signal-processor-qt` binary works after it is placed next
-to `settings.json` (and, at runtime, `measurements.db` is created there).
+`build/signal-processor-qt` runs from `build/` with `settings.json` beside it;
+`measurements.db` is created there at runtime.
 
-### Shortcuts (`just`)
-
-`CMakePresets.json` holds four configurations — `release` (`-O2` + LTO),
-`debug`, `san` (Debug + ASan/UBSan) and `windows` (MinGW-w64 cross build).
-All of them treat compiler warnings as errors. The `justfile` wraps them:
+### Useful commands
 
 ```sh
-just              # optimized release build
-just debug        # development build
-just san          # debug build with sanitizers
-just test         # build a preset and run the Qt Test suite
-just all          # build all Linux presets in turn
-just run          # build and run (release by default)
-just smoke        # headless 5-second run of the release build
-just settings     # copy settings.json next to every configured binary
-just lang en      # release build in another compiled-in language
-just windows-static  # cross build → build-win/SignalProcessor.exe
-just dist         # assemble dist/: SignalProcessor.exe + settings.json
-just docs         # Doxygen HTML into build/doxygen/html
-just fmt          # format all sources with clang-format
-just fmt-check    # verify sources are formatted
-just clean        # remove all preset build directories
+cmake --preset debug             # development build
+cmake --preset windows           # MinGW-w64 static cross build
+ctest --test-dir build           # run the Qt Test suite
+xargs clang-format -i < <(find src tests -name '*.cpp' -o -name '*.h')
+xargs clang-format --Werror -n < <(find src tests -name '*.cpp' -o -name '*.h')
 ```
 
 ### Build options
@@ -68,10 +56,7 @@ just clean        # remove all preset build directories
 |--------|---------|---------|
 | `CMAKE_BUILD_TYPE` | — | `Debug` for development, `Release` for shipping |
 | `SIGNAL_PROCESSOR_LANGUAGE` | `ru` | UI language compiled into the binary |
-| `SIGNAL_PROCESSOR_LTO` | `ON` | Interprocedural (link-time) optimization in release builds |
-| `SIGNAL_PROCESSOR_NATIVE_OPT` | `OFF` | `-march=native` (GCC/Clang); the binary stops being portable |
 | `SIGNAL_PROCESSOR_WARNINGS_AS_ERRORS` | `ON` | Fail the build on any compiler warning |
-| `SIGNAL_PROCESSOR_SANITIZERS` | `OFF` | ASan + UBSan in Debug builds (GCC/Clang only) |
 | `SIGNAL_PROCESSOR_BUILD_TESTS` | `ON` | Build the Qt Test suite (skipped on Windows) |
 
 ## Configuration (`settings.json`)
@@ -115,7 +100,7 @@ a translated string, so database contents do not depend on the build language.
 ## Tests
 
 ```sh
-just test          # configure, build, ctest --output-on-failure
+ctest --test-dir build   # tests build on Linux; skipped on Windows
 ```
 
 The Qt Test suite mirrors the original Python `unittest` suite — calculation,
@@ -132,15 +117,15 @@ empty operation-mode list and the unbalanced-brace line template).
 Two ways to produce a Windows build:
 
 1. **Cross build on Linux (recommended here):**
-   `just windows-static` — MinGW-w64 with a static Qt 6 for Windows;
-   produces a fully self-contained `build-win/SignalProcessor.exe`
-   (system DLLs only, no Qt DLLs needed); see `cmake/mingw-static.cmake`
-   for the toolchain requirements.
-   `just dist` — assembles `dist/SignalProcessor.exe` + `dist/settings.json`.
+   `cmake --preset windows && cmake --build --preset windows` —
+   MinGW-w64 with a static Qt 6 for Windows; produces a fully self-contained
+   `build-win/SignalProcessor.exe` (system DLLs only, no Qt DLLs needed);
+   see `cmake/mingw-static.cmake` for the toolchain requirements. To assemble
+   the release bundle: `cp build-win/SignalProcessor.exe dist/ &&
+   cp settings.json dist/`.
 2. **Native build on Windows:** run the presets in a “x64 Native Tools”
    prompt (or after `vcvars64.bat`): `cmake --preset release &&
-   cmake --build --preset release`. `windeployqt` deploys the Qt runtime;
-   `just windows` wraps it.
+   cmake --build --preset release`. `windeployqt` deploys the Qt runtime.
 
 ## Project layout
 

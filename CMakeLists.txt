@@ -3,28 +3,26 @@ cmake_minimum_required(VERSION 3.21)
 project(signal-processor-qt
     VERSION 1.0.0
     DESCRIPTION "SignalProcessor in Qt: spectrum analysis of communication lines"
-    LANGUAGES CXX
-)
+    LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Release presets promise -O2 regardless of the toolchain's default release
-# level (some CMake versions/distributions default to -O3).
+# level (some CMake versions default to -O3).
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     string(REGEX REPLACE "-O[0-9]+|-Os" "-O2" CMAKE_CXX_FLAGS_RELEASE
         "${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
 
-# Language of the build: en.json / ru.json ... from resources/i18n is compiled
-# into the binary. A release in another language is produced by changing this
-# option; the layout of the deliverables does not change: binary + settings.json.
-set(SIGNAL_PROCESSOR_LANGUAGE "ru" CACHE STRING "Interface language compiled into the binary")
+# Interface language compiled into the binary; a build in another language is
+# produced by changing SIGNAL_PROCESSOR_LANGUAGE.
+set(SIGNAL_PROCESSOR_LANGUAGE "ru" CACHE STRING "Interface language")
 set(SIGNAL_PROCESSOR_I18N_FILE
     ${CMAKE_CURRENT_SOURCE_DIR}/resources/i18n/${SIGNAL_PROCESSOR_LANGUAGE}.json)
 if(NOT EXISTS ${SIGNAL_PROCESSOR_I18N_FILE})
-    message(FATAL_ERROR "Translation resources/i18n/${SIGNAL_PROCESSOR_LANGUAGE}.json not found")
+    message(FATAL_ERROR "Translation ${SIGNAL_PROCESSOR_I18N_FILE} not found")
 endif()
 
 find_package(Qt6 6.12 REQUIRED COMPONENTS Widgets Sql)
@@ -64,10 +62,9 @@ qt_add_executable(signal-processor-qt
 )
 target_include_directories(signal-processor-qt PRIVATE src src/ui)
 
-# Translation compiled into the binary: resource path inside a single json.
+# Translation compiled into the binary.
 target_compile_definitions(signal-processor-qt PRIVATE
-    SIGNAL_PROCESSOR_TRANSLATION=":/i18n/${SIGNAL_PROCESSOR_LANGUAGE}.json"
-)
+    SIGNAL_PROCESSOR_TRANSLATION=":/i18n/${SIGNAL_PROCESSOR_LANGUAGE}.json")
 set_property(SOURCE "${SIGNAL_PROCESSOR_I18N_FILE}" PROPERTY QT_RESOURCE_ALIAS
     "${SIGNAL_PROCESSOR_LANGUAGE}.json")
 qt_add_resources(signal-processor-qt signalprocessor-i18n
@@ -77,170 +74,82 @@ qt_add_resources(signal-processor-qt signalprocessor-i18n
 
 target_link_libraries(signal-processor-qt PRIVATE Qt6::Widgets Qt6::Sql)
 
-# Static MinGW dependencies of the system freetype/harfbuzz that Qt's wrap does
-# not know (freetype needs brotli even with a stock build).
+# MinGW links static system libraries for the Qt wraps that Qt does not know.
 if(WIN32)
     target_link_libraries(signal-processor-qt PRIVATE graphite2 bz2
         brotlidec brotlienc brotlicommon)
 endif()
 
-# Windows deliverable is named SignalProcessor.exe (see the release bundle).
+# Windows deliverable is named SignalProcessor.exe; static Qt needs its platform
+# and SQL plugins linked explicitly.
 if(WIN32)
     set_target_properties(signal-processor-qt PROPERTIES
         OUTPUT_NAME SignalProcessor
-    )
+        WIN32_EXECUTABLE TRUE)
     if(MINGW)
-        # The static plugin packages are not findable via find_package (their
-        # configs live inside the Qt6Gui/Qt6Sql package directories), so include
-        # them directly: the Windows platform plugin and the SQLite driver that
-        # measurements.db needs at runtime.
         set(SIGNAL_PROCESSOR_QT6_PLUGINS_DIR "/usr/x86_64-w64-mingw32/static/lib/cmake"
-            CACHE PATH "Location of the static Qt plugin config packages (MinGW)")
+            CACHE PATH "Static Qt plugin config packages (MinGW)")
         include(${SIGNAL_PROCESSOR_QT6_PLUGINS_DIR}/Qt6Gui/Qt6QWindowsIntegrationPluginConfig.cmake)
         include(${SIGNAL_PROCESSOR_QT6_PLUGINS_DIR}/Qt6Sql/Qt6QSQLiteDriverPluginConfig.cmake)
-        # Link the plugin libraries and their initializer objects directly. The
-        # Sql module's plugin auto-inclusion is disabled (it would require
-        # PostgreSQL/MySQL), so the finalizer would never collect the SQLite
-        # driver; explicit linkage is the robust substitute for the manual import.
         target_link_libraries(signal-processor-qt PRIVATE
             Qt6::QWindowsIntegrationPlugin Qt6::QWindowsIntegrationPlugin_init
             Qt6::QSQLiteDriverPlugin Qt6::QSQLiteDriverPlugin_init)
         unset(SIGNAL_PROCESSOR_QT6_PLUGINS_DIR)
     endif()
+else()
+    set_target_properties(signal-processor-qt PROPERTIES
+        WIN32_EXECUTABLE TRUE
+        MACOSX_BUNDLE FALSE
+    )
 endif()
 
-set_target_properties(signal-processor-qt PROPERTIES
-    WIN32_EXECUTABLE TRUE
-    MACOSX_BUNDLE FALSE
+# Strict diagnostics: applied only to our sources, never to Qt itself.
+set(SIGNAL_PROCESSOR_WARNING_FLAGS
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wconversion
+    -Wsign-conversion
+    -Wdouble-promotion
+    -Wfloat-equal
+    -Wshadow
+    -Wnon-virtual-dtor
+    -Woverloaded-virtual
+    -Wold-style-cast
+    -Wcast-align
+    -Wnull-dereference
+    -Wvla
+    -Warray-bounds=2
+    -Wstringop-overflow=4
+    -Wformat=2
+    -Wimplicit-fallthrough=5
 )
-
-# -----------------------------------------------------------------------------
-# Warnings and optimizations
-# -----------------------------------------------------------------------------
-
-include(CheckIPOSupported)
-
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    list(APPEND SIGNAL_PROCESSOR_WARNING_FLAGS
+        -Wlogical-op
+        -Wduplicated-cond
+        -Wduplicated-branches
+        -Wuseless-cast
+    )
+endif()
 option(SIGNAL_PROCESSOR_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
-option(SIGNAL_PROCESSOR_LTO "Enable interprocedural (link-time) optimization" ON)
-option(SIGNAL_PROCESSOR_NATIVE_OPT "Optimize for the build machine (-march=native), non-portable" OFF)
-# Development helper for Linux: SIGNAL_PROCESSOR_SANITIZERS=ON adds AddressSanitizer
-# and UndefinedBehaviorSanitizer (GCC/Clang only). Use it in a separate build
-# directory, together with the Debug build type.
-option(SIGNAL_PROCESSOR_SANITIZERS "Build with ASan + UBSan (GCC/Clang only)" OFF)
-
-# Strict diagnostics. GCC/Clang and MSVC have different spellings; the flags
-# are applied only to our sources, never to Qt itself.
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    set(SIGNAL_PROCESSOR_WARNING_FLAGS
-        -Wall
-        -Wextra
-        -Wpedantic
-        # Conversion and narrowing.
-        -Wconversion
-        -Wsign-conversion
-        -Wdouble-promotion
-        -Wfloat-equal
-        # Correctness style rules.
-        -Wshadow
-        -Wnon-virtual-dtor
-        -Woverloaded-virtual
-        -Wold-style-cast
-        -Wcast-align
-        -Wnull-dereference
-        -Wvla
-        -Warray-bounds=2
-        -Wstringop-overflow=4
-        # printf-style format and diagnostics.
-        -Wformat=2
-        -Wimplicit-fallthrough=5
-        # Hardening.
-        -fstack-protector-strong
-        -fno-common
-    )
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        # GCC-only checks, Clang rejects some of them.
-        list(APPEND SIGNAL_PROCESSOR_WARNING_FLAGS
-            -Wlogical-op
-            -Wduplicated-cond
-            -Wduplicated-branches
-            -Wuseless-cast
-        )
-    endif()
-elseif(MSVC)
-    # WinMain entry: keep WIN32_EXECUTABLE effective and avoid setlocale issues
-    # with UTF-8 sources and resources.
-    set(SIGNAL_PROCESSOR_WARNING_FLAGS
-        /W4
-        /permissive-
-        /Zc:__cplusplus
-        /Zc:preprocessor
-        /utf-8
-        # Signed/unsigned and narrowing equivalents.
-        /w14242
-        /w14254
-        /w14263
-        /w14265
-        /w14287
-        /w14296
-        /w14311
-        # Codegen parity for common suspects.
-        /w14640
-        /w14826
-        /w14905
-        /w14906
-        /w14928
-    )
-    # Close to the GCC hardening set above.
-    target_compile_options(signal-processor-qt PRIVATE /sdl) # extra lifetime/undef checks
-endif()
 if(SIGNAL_PROCESSOR_WARNINGS_AS_ERRORS)
-    if(MSVC)
-        list(APPEND SIGNAL_PROCESSOR_WARNING_FLAGS /WX)
-    else()
-        list(APPEND SIGNAL_PROCESSOR_WARNING_FLAGS -Werror)
-    endif()
+    list(APPEND SIGNAL_PROCESSOR_WARNING_FLAGS -Werror)
 endif()
-if(SIGNAL_PROCESSOR_WARNING_FLAGS)
-    target_compile_options(signal-processor-qt PRIVATE ${SIGNAL_PROCESSOR_WARNING_FLAGS})
-endif()
+target_compile_options(signal-processor-qt PRIVATE ${SIGNAL_PROCESSOR_WARNING_FLAGS})
 
-# Build machine tuning, opt-in: the produced binary stops being portable.
-# MSVC equivalent (/arch:) is intentionally not enabled by default.
-if(SIGNAL_PROCESSOR_NATIVE_OPT AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(signal-processor-qt PRIVATE -march=native)
-endif()
-
-# Sanitizers for the development builds on Linux (mutually exclusive with LTO
-# and with the optimized release flags).
-if(SIGNAL_PROCESSOR_SANITIZERS AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    message(STATUS "Sanitizers enabled: ASan + UBSan (development build)")
-    target_compile_options(signal-processor-qt PRIVATE
-        $<$<CONFIG:Debug>:-fsanitize=address,undefined>
-        $<$<CONFIG:Debug>:-fno-omit-frame-pointer>
-        $<$<CONFIG:Debug>:-fno-sanitize=signed-integer-overflow>)
-    target_link_options(signal-processor-qt PRIVATE
-        $<$<CONFIG:Debug>:-fsanitize=address,undefined>)
-endif()
-
-# Release default of -O2 is fine; LTO buys a bit more.
-# Qt's third-party templates sometimes warn, so warnings apply only to our
-# sources (compile options on the target, not INTERFACE).
+# LTO in release builds; best effort, gains a bit of speed.
 if(CMAKE_BUILD_TYPE MATCHES "Release|RelWithDebInfo|MinSizeRel")
-    check_ipo_supported(RESULT SIGNAL_PROCESSOR_IPO OUTPUT SIGNAL_PROCESSOR_IPO_MSG)
-    if(SIGNAL_PROCESSOR_LTO AND SIGNAL_PROCESSOR_IPO)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT SIGNAL_PROCESSOR_IPO)
+    if(SIGNAL_PROCESSOR_IPO)
         set_target_properties(signal-processor-qt PROPERTIES
             INTERPROCEDURAL_OPTIMIZATION TRUE)
-    elseif(SIGNAL_PROCESSOR_LTO)
-        message(STATUS "LTO not enabled (${SIGNAL_PROCESSOR_IPO_MSG})")
     endif()
 endif()
 
-# -----------------------------------------------------------------------------
-# Tests (Qt Test + CTest)
-# -----------------------------------------------------------------------------
-
+# Qt Test + CTest suite. Shares the application sources.
 option(SIGNAL_PROCESSOR_BUILD_TESTS "Build the Qt Test suite" ON)
-
 if(SIGNAL_PROCESSOR_BUILD_TESTS AND NOT WIN32)
     enable_testing()
     find_package(Qt6 6.12 REQUIRED COMPONENTS Test)
@@ -254,8 +163,7 @@ if(SIGNAL_PROCESSOR_BUILD_TESTS AND NOT WIN32)
         src/calculation.cpp
         src/database.cpp
     )
-
-    set(SIGNAL_PROCESSOR_UI_TESTABLE_SOURCES
+    set(SIGNAL_PROCESSOR_UI_SOURCES
         ${SIGNAL_PROCESSOR_TESTABLE_SOURCES}
         src/ui/double_validator.cpp
         src/ui/file_drop_line_edit.cpp
@@ -268,8 +176,7 @@ if(SIGNAL_PROCESSOR_BUILD_TESTS AND NOT WIN32)
         target_include_directories(${name} PRIVATE src src/ui)
         target_compile_definitions(${name} PRIVATE
             SIGNAL_PROCESSOR_TRANSLATION=":/i18n/${SIGNAL_PROCESSOR_LANGUAGE}.json"
-        )
-        # Reuse the same translation resource so tests exercise the real strings.
+            SIGNAL_PROCESSOR_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
         set_property(SOURCE "${SIGNAL_PROCESSOR_I18N_FILE}" PROPERTY QT_RESOURCE_ALIAS
             "${SIGNAL_PROCESSOR_LANGUAGE}.json")
         qt_add_resources(${name} ${name}-i18n
@@ -278,9 +185,6 @@ if(SIGNAL_PROCESSOR_BUILD_TESTS AND NOT WIN32)
         )
         target_link_libraries(${name} PRIVATE Qt6::Test Qt6::Widgets Qt6::Sql)
         target_compile_options(${name} PRIVATE ${SIGNAL_PROCESSOR_WARNING_FLAGS})
-        # The tests resolve the shipped settings.json relative to the source tree.
-        target_compile_definitions(${name} PRIVATE
-            SIGNAL_PROCESSOR_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
         add_test(NAME ${name} COMMAND ${name})
         set_tests_properties(${name} PROPERTIES
             ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -290,5 +194,5 @@ if(SIGNAL_PROCESSOR_BUILD_TESTS AND NOT WIN32)
     signal_processor_add_test(test_calculation ${SIGNAL_PROCESSOR_TESTABLE_SOURCES})
     signal_processor_add_test(test_settings_store ${SIGNAL_PROCESSOR_TESTABLE_SOURCES})
     signal_processor_add_test(test_database ${SIGNAL_PROCESSOR_TESTABLE_SOURCES})
-    signal_processor_add_test(test_ui ${SIGNAL_PROCESSOR_UI_TESTABLE_SOURCES})
+    signal_processor_add_test(test_ui ${SIGNAL_PROCESSOR_UI_SOURCES})
 endif()

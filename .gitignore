@@ -1,9 +1,7 @@
 build/
 build-dev/
-build-san/
 build-win/
-build/package/
-dist/
+/dist/
 /CMakeUserPresets.json
 *.tmp
 settings.corrupted-*.json
