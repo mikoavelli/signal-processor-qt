@@ -100,6 +100,13 @@ tables — `measurements` (device, category, line, mode, R, overall result) and
 `measurement_points` (per control frequency; foreign key, cascade delete).
 Rows are appended on every “Save measurement”.
 
+If the directory the executable sits in is not writable (e.g. `C:\` root or
+`Program Files`), the app falls back to a per-user location —
+`%LOCALAPPDATA%\SignalProcessor\measurements.db` on Windows,
+`~/.local/share/SignalProcessor/measurements.db` on Linux — copying an
+existing adjacent `measurements.db` over best-effort. An adjacent
+`measurements.db`, when present and writable, always takes precedence.
+
 `measurement_type` is stored as the stable code (`voltage` / `current`), not as
 a translated string, so database contents do not depend on the build language.
 

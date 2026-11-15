@@ -66,7 +66,7 @@ private:
     QString m_deviceName; ///< Device under test.
     int m_categoryIndex = 0; ///< 0-based object category index.
     int m_lineNumber = 1; ///< 1-based line number within the series.
-    QString m_baseDirectory; ///< Directory for the measurements database.
+    QString m_databasePath; ///< Path of the measurements database file.
 
     std::optional<QString> m_signalNoisePath; ///< Chosen mixture spectrum file.
     std::optional<QString> m_noisePath; ///< Chosen own-noise spectrum file.

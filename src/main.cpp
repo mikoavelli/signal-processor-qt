@@ -12,9 +12,37 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QFont>
 #include <QMessageBox>
+#include <QStandardPaths>
 #include <QStyleFactory>
+
+/// @brief Initialises measurements.db next to the executable, falling back to a
+/// per-user writable location when the executable's directory is not writable
+/// (e.g. C:\ root or Program Files). Returns the path actually used.
+static QString initializeMeasurementsDatabase(const QString &baseDir)
+{
+    const QString adjacent = QDir(baseDir).filePath(QStringLiteral("measurements.db"));
+    try {
+        initDatabase(adjacent);
+        return adjacent;
+    } catch (const DatabaseError &) {
+        // Fallback: per-user data directory (%LOCALAPPDATA%/SignalProcessor on
+        // Windows, ~/.local/share/SignalProcessor on Linux). Preserve an
+        // existing adjacent database by copying it over if possible.
+        const QString dir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)
+            + QStringLiteral("/SignalProcessor");
+        QDir().mkpath(dir);
+        const QString fallback = QDir(dir).filePath(QStringLiteral("measurements.db"));
+        if (!QFileInfo::exists(fallback) && QFileInfo::exists(adjacent)) {
+            QFile::copy(adjacent, fallback); // best effort; ignore failures
+        }
+        initDatabase(fallback); // throws DatabaseError on failure
+        return fallback;
+    }
+}
 
 
 int main(int argc, char *argv[])
@@ -40,14 +68,14 @@ int main(int argc, char *argv[])
 
     try {
         const sp::AppConfig config = sp::settings_store::loadConfig(settingsPath);
-        initDatabase(QDir(baseDir).filePath(QStringLiteral("measurements.db")));
+        const QString databasePath = initializeMeasurementsDatabase(baseDir);
 
         sp::ui::StartupDialog startup;
         if (startup.exec() != QDialog::Accepted) {
             return 0;
         }
         const auto [deviceName, categoryIndex] = startup.parameters();
-        sp::ui::MainWindow window(config, deviceName, categoryIndex, baseDir);
+        sp::ui::MainWindow window(config, deviceName, categoryIndex, databasePath);
         window.show();
         return app.exec();
     } catch (const ConfigNotFoundError &error) {

@@ -13,7 +13,6 @@
 
 #include <QButtonGroup>
 #include <QCloseEvent>
-#include <QDir>
 #include <QFileInfo>
 #include <QComboBox>
 #include <QFileDialog>
@@ -34,12 +33,12 @@
 namespace sp::ui {
 
 MainWindow::MainWindow(const sp::AppConfig &config, const QString &deviceName,
-    int categoryIndex, const QString &baseDirectory, QWidget *parent)
+    int categoryIndex, const QString &databasePath, QWidget *parent)
     : QMainWindow(parent)
     , m_config(config)
     , m_deviceName(deviceName)
     , m_categoryIndex(categoryIndex)
-    , m_baseDirectory(baseDirectory)
+    , m_databasePath(databasePath)
     , m_signalNoiseEdit(new FileDropLineEdit(tr_ns::tr("window.placeholder.file"),
           [this](const QString &path) { setSignalNoiseFile(path); },
           this))
@@ -359,8 +358,7 @@ void MainWindow::saveToDatabase()
     const sp::MeasurementKind measurementType = currentMeasurementType();
 
     try {
-        saveMeasurement(QDir(m_baseDirectory).filePath(QStringLiteral("measurements.db")),
-            m_deviceName,
+        saveMeasurement(m_databasePath, m_deviceName,
             m_categoryIndex + 1, m_lineNumber, lineName,
             (index >= 0) ? currentLineType() : sp::LineType::Power, mode,
             sp::measurementKindToString(measurementType), resistance.value(),
