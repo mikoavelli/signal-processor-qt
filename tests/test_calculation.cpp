@@ -199,7 +199,8 @@ void TestCalculation::calculateWIdentity() {
 }
 
 void TestCalculation::intermediateUZeroDivisionGuard() {
-    QVERIFY_EXCEPTION_THROWN(calculateQ(5.0, 0.0, sp::MeasurementKind::Voltage, 50.0),
+    // Deliberately passing zero pointIndex: the guard is about the error, not the index.
+    QVERIFY_EXCEPTION_THROWN(calculateQ(5.0, 0.0, sp::MeasurementKind::Voltage, 50.0, 0),
                              CalculationError);
 }
 

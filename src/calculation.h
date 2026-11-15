@@ -34,10 +34,11 @@ double calculateIntermediateU(double resistance, double deltaF, double normNoise
 /// @param intermediateU Intermediate value of the point; must be positive.
 /// @param measurementType Which quantity is measured.
 /// @param resistance Resistance R, ohm.
+/// @param pointIndex Point number used for the error message (0 if not attached to a point).
 /// @return The q ratio.
 /// @throws CalculationError If @p intermediateU is not positive.
 double calculateQ(double signalLevel, double intermediateU, sp::MeasurementKind measurementType,
-                  double resistance);
+                  double resistance, int pointIndex = 0);
 
 /// @brief Computes the total W from the weighted r_i sum (identity).
 /// @param rSum Weighted sum of the point r_i values.

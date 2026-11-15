@@ -56,12 +56,11 @@ double calculateIntermediateU(double resistance, double deltaF, double normNoise
 }
 
 double calculateQ(double signalLevel, double intermediateU, sp::MeasurementKind measurementType,
-                  double resistance) {
+                  double resistance, int pointIndex) {
     if (intermediateU <= 0.0) {
-        // The reference implementation returned 0 here; the guarded behaviour is
-        // an explicit error: dividing by a non-positive norm is meaningless.
-        // The message does not name the point index; the caller knows it.
-        throw CalculationError(tr_ns::tr("err.intermediateNotPositive", QString()));
+        // Dividing by a non-positive norm is meaningless; the message names the point.
+        throw CalculationError(
+            tr_ns::tr("err.intermediateNotPositive", QString::number(pointIndex)));
     }
     if (measurementType == sp::MeasurementKind::Current) {
         return (signalLevel * resistance) / intermediateU;
@@ -139,13 +138,8 @@ sp::CalculationResult calculate(const QString& signalNoisePath, const QString& n
         const double signalLevel = computeSignalLevel(snValues.at(index), nValues.at(index));
         const double intermediateU = calculateIntermediateU(
             validResistance, constants.deltaFI.at(index), lineNoiseValues.at(index), lineType);
-        double q = 0.0;
-        try {
-            q = calculateQ(signalLevel, intermediateU, measurementType, validResistance);
-        } catch (const CalculationError&) {
-            throw CalculationError(
-                tr_ns::tr("err.intermediateNotPositive", QString::number(index + 1)));
-        }
+        const double q =
+            calculateQ(signalLevel, intermediateU, measurementType, validResistance, index + 1);
         sp::MeasurementPoint point;
         point.index = index + 1;
         point.deltaF = round4(constants.deltaFI.at(index));
