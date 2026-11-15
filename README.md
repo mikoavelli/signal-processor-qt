@@ -57,6 +57,8 @@ just lang en      # release build in another compiled-in language
 just windows-static  # cross build → build-win/SignalProcessor.exe
 just dist         # assemble dist/: SignalProcessor.exe + settings.json
 just docs         # Doxygen HTML into build/doxygen/html
+just fmt          # format all sources with clang-format
+just fmt-check    # verify sources are formatted
 just clean        # remove all preset build directories
 ```
 
@@ -130,9 +132,10 @@ empty operation-mode list and the unbalanced-brace line template).
 Two ways to produce a Windows build:
 
 1. **Cross build on Linux (recommended here):**
-   `just windows-static` — MinGW-w64 + static Qt from the `ownstuff`
-   repository; produces a fully self-contained `build-win/SignalProcessor.exe`
-   (system DLLs only, no Qt DLLs needed).
+   `just windows-static` — MinGW-w64 with a static Qt 6 for Windows;
+   produces a fully self-contained `build-win/SignalProcessor.exe`
+   (system DLLs only, no Qt DLLs needed); see `cmake/mingw-static.cmake`
+   for the toolchain requirements.
    `just dist` — assembles `dist/SignalProcessor.exe` + `dist/settings.json`.
 2. **Native build on Windows:** run the presets in a “x64 Native Tools”
    prompt (or after `vcvars64.bat`): `cmake --preset release &&
