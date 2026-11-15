@@ -116,23 +116,20 @@ empty operation-mode list and the unbalanced-brace line template).
 
 Two ways to produce a Windows build:
 
-1. **Cross build on Linux (recommended here):**
-   `cmake --preset windows && cmake --build --preset windows` —
-   MinGW-w64 with a static Qt 6 for Windows; produces a fully self-contained
-   `build-win/SignalProcessor.exe` (system DLLs only, no Qt DLLs needed);
-   see `cmake/mingw-static.cmake` for the toolchain requirements. To assemble
-   the release bundle: `cp build-win/SignalProcessor.exe dist/ &&
-   cp settings.json dist/`.
+1. **Cross build on Linux:** `cmake --preset windows && cmake --build --preset windows`
+   — MinGW-w64 with a static Qt 6 for Windows; produces a fully self-contained
+   `build-win/SignalProcessor.exe` (system DLLs only, no Qt DLLs needed).
+   The toolchain needs `MINGW_SYSROOT` and `STATIC_QT_PREFIX` to point at the
+   MinGW-w64 sysroot and the static Qt install prefix. Either export them in
+   the environment and run `cmake --preset windows`, or copy the example
+   `CMakeUserPresets.json` layout (gitignored) defining a `windows-local`
+   preset that inherits `windows` and sets the two variables.
+   See `cmake/mingw-static.cmake` for details.
+   To assemble the release bundle:
+   `cp build-win/SignalProcessor.exe dist/ && cp settings.json dist/`.
 2. **Native build on Windows:** run the presets in a “x64 Native Tools”
    prompt (or after `vcvars64.bat`): `cmake --preset release &&
    cmake --build --preset release`. `windeployqt` deploys the Qt runtime.
-
-## CI
-
-GitHub Actions runs on every push to `main` and every pull request:
-
-- **Linux** — configure+build `release`, run the `ctest` suite.
-- **Windows** — configure+build with MSVC, run the tests, deploy `SignalProcessor.exe` with its Qt DLLs via `windeployqt` and upload the bundle as an artifact.
 
 ## License
 

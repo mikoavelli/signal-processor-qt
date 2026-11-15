@@ -1,13 +1,15 @@
 # Compat package for Qt's FindWrapBrotli: the MinGW sysroot ships no
 # unofficial-brotli CMake config, so point the expected targets at the
-# static archives. Path layout: this file lives in cmake/compat/unofficial-brotli/,
-# libraries are expected at /usr/x86_64-w64-mingw32/lib/.
+# static archives. Requires MINGW_SYSROOT to be set in the environment.
 if(TARGET unofficial::brotli::brotlidec)
     set(unofficial-brotli_FOUND TRUE)
     return()
 endif()
 
-set(_brotli_prefix "/usr/x86_64-w64-mingw32")
+if(NOT DEFINED ENV{MINGW_SYSROOT})
+    message(FATAL_ERROR "MINGW_SYSROOT is not set")
+endif()
+set(_brotli_prefix "$ENV{MINGW_SYSROOT}")
 
 foreach(lib_name IN ITEMS brotlicommon brotlidec brotlienc)
     add_library(unofficial::brotli::${lib_name} STATIC IMPORTED)

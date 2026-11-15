@@ -1,16 +1,30 @@
 # Cross toolchain: build the Windows (static) signal-processor-qt with MinGW-w64 on Linux.
 #
-# Requires the Arch packages from the `ownstuff` repository:
-#   mingw-w64-qt6-base-static 6.12.0-2   (CMake configs live in
-#   mingw-w64-qt6-sql-static               /usr/x86_64-w64-mingw32/static)
-# plus the shared mingw-w64-qt6-base for the Windows headers of the host.
+# Requires a static Qt 6 for Windows built with MinGW-w64, with CMake package
+# configs (Qt6Core, Qt6Sql, the Windows platform plugin and the SQLite driver)
+# under <STATIC_QT_PREFIX>/lib/cmake/Qt6*.
+#
+# Set MINGW_SYSROOT (MinGW-w64 sysroot, e.g. /opt/mingw/x86_64-w64-mingw32) and
+# STATIC_QT_PREFIX (the static Qt install prefix) in the environment, or put it
+# in CMakeUserPresets.json next to this file (gitignored):
+#   {"version": 3, "configurePresets": [{"name": "windows", "inherits": "windows-base",
+#     "environment": {"MINGW_SYSROOT": "/opt/mingw/x86_64-w64-mingw32", "STATIC_QT_PREFIX": "/opt/mingw/x86_64-w64-mingw32/static"}}]}
 #
 # Usage:
-#   cmake --preset windows
-#   cmake --build --preset windows
-#
-# The produced SignalProcessor.exe is statically linked and self-contained.
-# Qt host tools (moc/rcc/uic) are taken from the Linux Qt 6 of the same version.
+#   MINGW_SYSROOT=/opt/mingw/x86_64-w64-mingw32 STATIC_QT_PREFIX=/opt/mingw/x86_64-w64-mingw32/static cmake --preset windows
+
+if(NOT DEFINED ENV{MINGW_SYSROOT})
+    message(FATAL_ERROR
+        "MINGW_SYSROOT is not set. Point it at the MinGW-w64 sysroot, e.g.\n"
+        "  MINGW_SYSROOT=/opt/mingw/x86_64-w64-mingw32 STATIC_QT_PREFIX=/opt/mingw/x86_64-w64-mingw32/static cmake --preset windows")
+endif()
+if(NOT DEFINED ENV{STATIC_QT_PREFIX})
+    message(FATAL_ERROR
+        "STATIC_QT_PREFIX is not set. Point it at the static Qt 6 install prefix.")
+endif()
+
+set(MINGW_SYSROOT "$ENV{MINGW_SYSROOT}" CACHE PATH "MinGW-w64 sysroot prefix" FORCE)
+set(STATIC_QT_PREFIX "$ENV{STATIC_QT_PREFIX}" CACHE PATH "Static Qt 6 install prefix" FORCE)
 
 set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_SYSTEM_PROCESSOR x86_64)
@@ -25,20 +39,20 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 # Qt's static Sql module auto-scans all of its drivers (QPSQL needs PostgreSQL,
 # QMYSQL needs MySQL — neither is installed for MinGW). Skip the auto scan and
 # import only the plugins the application needs: the Windows platform plugin and
-# the SQLite driver (see qt_import_plugins in CMakeLists.txt).
+# the SQLite driver (see the WIN32 block in CMakeLists.txt).
 set(QT_SKIP_AUTO_PLUGIN_INCLUSION ON)
 
 # Target (Windows) Qt: static libraries and CMake package configs.
 set(CMAKE_PREFIX_PATH
-    /usr/x86_64-w64-mingw32/static
-    /usr/x86_64-w64-mingw32
+    "${STATIC_QT_PREFIX}"
+    "${MINGW_SYSROOT}"
 )
 set(CMAKE_FIND_ROOT_PATH
-    /usr/x86_64-w64-mingw32/static
-    /usr/x86_64-w64-mingw32
+    "${STATIC_QT_PREFIX}"
+    "${MINGW_SYSROOT}"
 )
 
-# Host (Linux) Qt 6.12 — generator tools.
+# Host Qt — generator tools.
 set(QT_HOST_PATH /usr CACHE PATH "Host Qt 6 installation (moc/rcc/uic)")
 
 # --- Static link against the MinGW dependencies ------------------------------
@@ -71,61 +85,60 @@ set(PKG_CONFIG_EXECUTABLE "${CMAKE_CURRENT_LIST_DIR}/pkg-config-static.sh" CACHE
 # sysroot has no such config, so point it at the bundled compat package.
 set(unofficial-brotli_DIR "${CMAKE_CURRENT_LIST_DIR}/compat/unofficial-brotli" CACHE PATH
     "compat config: static brotli for Qt" FORCE)
-set(HARFBUZZ_INCLUDE_DIRS "/usr/x86_64-w64-mingw32/include/harfbuzz" CACHE PATH
+set(HARFBUZZ_INCLUDE_DIRS "${MINGW_SYSROOT}/include/harfbuzz" CACHE PATH
     "harfbuzz include path for the static fallback" FORCE)
-set(HARFBUZZ_LIBRARIES "/usr/x86_64-w64-mingw32/lib/libharfbuzz.a" CACHE FILEPATH
+set(HARFBUZZ_LIBRARIES "${MINGW_SYSROOT}/lib/libharfbuzz.a" CACHE FILEPATH
     "static harfbuzz for the Qt wrap" FORCE)
 
-set(FREETYPE_LIBRARY "/usr/x86_64-w64-mingw32/lib/libfreetype.a" CACHE FILEPATH
+set(FREETYPE_LIBRARY "${MINGW_SYSROOT}/lib/libfreetype.a" CACHE FILEPATH
     "static freetype for the Qt wrap" FORCE)
-set(JPEG_LIBRARY "/usr/x86_64-w64-mingw32/lib/libjpeg.a" CACHE FILEPATH
+set(JPEG_LIBRARY "${MINGW_SYSROOT}/lib/libjpeg.a" CACHE FILEPATH
     "static libjpeg for the Qt wrap" FORCE)
-set(JPEG_LIBRARY_RELEASE "/usr/x86_64-w64-mingw32/lib/libjpeg.a" CACHE FILEPATH
+set(JPEG_LIBRARY_RELEASE "${MINGW_SYSROOT}/lib/libjpeg.a" CACHE FILEPATH
     "static libjpeg for the Qt wrap" FORCE)
-set(PNG_LIBRARY "/usr/x86_64-w64-mingw32/lib/libpng16.a" CACHE FILEPATH
+set(PNG_LIBRARY "${MINGW_SYSROOT}/lib/libpng16.a" CACHE FILEPATH
     "static libpng for the Qt wrap" FORCE)
-set(PNG_LIBRARY_RELEASE "/usr/x86_64-w64-mingw32/lib/libpng16.a" CACHE FILEPATH
+set(PNG_LIBRARY_RELEASE "${MINGW_SYSROOT}/lib/libpng16.a" CACHE FILEPATH
     "static libpng for the Qt wrap" FORCE)
-set(ZLIB_LIBRARY "/usr/x86_64-w64-mingw32/lib/libz.a" CACHE FILEPATH
+set(ZLIB_LIBRARY "${MINGW_SYSROOT}/lib/libz.a" CACHE FILEPATH
     "static zlib for the Qt wrap" FORCE)
-set(ZLIB_LIBRARY_RELEASE "/usr/x86_64-w64-mingw32/lib/libz.a" CACHE FILEPATH
+set(ZLIB_LIBRARY_RELEASE "${MINGW_SYSROOT}/lib/libz.a" CACHE FILEPATH
     "static zlib for the Qt wrap" FORCE)
-set(PCRE2_LIBRARY_RELEASE "/usr/x86_64-w64-mingw32/lib/libpcre2-16.a" CACHE FILEPATH
+set(PCRE2_LIBRARY_RELEASE "${MINGW_SYSROOT}/lib/libpcre2-16.a" CACHE FILEPATH
     "static pcre2-16 for the Qt wrap" FORCE)
-set(PCRE2_LIBRARY_DEBUG "/usr/x86_64-w64-mingw32/lib/libpcre2-16.a" CACHE FILEPATH
+set(PCRE2_LIBRARY_DEBUG "${MINGW_SYSROOT}/lib/libpcre2-16.a" CACHE FILEPATH
     "static pcre2-16 for the Qt wrap (debug too)" FORCE)
-set(PCRE2_LIBRARIES "/usr/x86_64-w64-mingw32/lib/libpcre2-16.a" CACHE FILEPATH
+set(PCRE2_LIBRARIES "${MINGW_SYSROOT}/lib/libpcre2-16.a" CACHE FILEPATH
     "static pcre2-16 for the Qt wrap" FORCE)
-set(PCRE2_INCLUDE_DIRS "/usr/x86_64-w64-mingw32/include" CACHE PATH
+set(PCRE2_INCLUDE_DIRS "${MINGW_SYSROOT}/include" CACHE PATH
     "pcre2 include dir for the Qt wrap" FORCE)
-set(ZSTD_LIBRARY_RELEASE "/usr/x86_64-w64-mingw32/lib/libzstd.a" CACHE FILEPATH
+set(ZSTD_LIBRARY_RELEASE "${MINGW_SYSROOT}/lib/libzstd.a" CACHE FILEPATH
     "static zstd for the Qt wrap" FORCE)
-set(ZSTD_LIBRARIES "/usr/x86_64-w64-mingw32/lib/libzstd.a" CACHE FILEPATH
+set(ZSTD_LIBRARIES "${MINGW_SYSROOT}/lib/libzstd.a" CACHE FILEPATH
     "static zstd for the Qt wrap" FORCE)
-set(BrotliDec_LIBRARY_RELEASE "/usr/x86_64-w64-mingw32/lib/libbrotlidec.a" CACHE FILEPATH
+set(BrotliDec_LIBRARY_RELEASE "${MINGW_SYSROOT}/lib/libbrotlidec.a" CACHE FILEPATH
     "static brotli for the Qt wrap" FORCE)
-set(BrotliEnc_LIBRARY_RELEASE "/usr/x86_64-w64-mingw32/lib/libbrotlienc.a" CACHE FILEPATH
+set(BrotliEnc_LIBRARY_RELEASE "${MINGW_SYSROOT}/lib/libbrotlienc.a" CACHE FILEPATH
     "static brotli for the Qt wrap" FORCE)
-set(BrotliCommon_LIBRARY_RELEASE "/usr/x86_64-w64-mingw32/lib/libbrotlicommon.a" CACHE FILEPATH
+set(BrotliCommon_LIBRARY_RELEASE "${MINGW_SYSROOT}/lib/libbrotlicommon.a" CACHE FILEPATH
     "static brotli for the Qt wrap" FORCE)
-set(BrotliDec_LIBRARY_DEBUG "/usr/x86_64-w64-mingw32/lib/libbrotlidec.a" CACHE FILEPATH
+set(BrotliDec_LIBRARY_DEBUG "${MINGW_SYSROOT}/lib/libbrotlidec.a" CACHE FILEPATH
     "static brotli for the Qt wrap" FORCE)
-set(BrotliEnc_LIBRARY_DEBUG "/usr/x86_64-w64-mingw32/lib/libbrotlienc.a" CACHE FILEPATH
+set(BrotliEnc_LIBRARY_DEBUG "${MINGW_SYSROOT}/lib/libbrotlienc.a" CACHE FILEPATH
     "static brotli for the Qt wrap" FORCE)
-set(BrotliCommon_LIBRARY_DEBUG "/usr/x86_64-w64-mingw32/lib/libbrotlicommon.a" CACHE FILEPATH
+set(BrotliCommon_LIBRARY_DEBUG "${MINGW_SYSROOT}/lib/libbrotlicommon.a" CACHE FILEPATH
     "static brotli for the Qt wrap" FORCE)
 # System SQLite must be linked statically too: the wrapper selects the system
 # library otherwise, and the produced exe would import libsqlite3-0.dll.
-set(SQLite3_LIBRARY "/usr/x86_64-w64-mingw32/lib/libsqlite3.a" CACHE FILEPATH
+set(SQLite3_LIBRARY "${MINGW_SYSROOT}/lib/libsqlite3.a" CACHE FILEPATH
     "static sqlite3 for the Qt wrap" FORCE)
-set(SQLite3_LIBRARY_RELEASE "/usr/x86_64-w64-mingw32/lib/libsqlite3.a" CACHE FILEPATH
+set(SQLite3_LIBRARY_RELEASE "${MINGW_SYSROOT}/lib/libsqlite3.a" CACHE FILEPATH
     "static sqlite3 for the Qt wrap (release)" FORCE)
-set(SQLite3_LIBRARY_DEBUG "/usr/x86_64-w64-mingw32/lib/libsqlite3.a" CACHE FILEPATH
+set(SQLite3_LIBRARY_DEBUG "${MINGW_SYSROOT}/lib/libsqlite3.a" CACHE FILEPATH
     "static sqlite3 for the Qt wrap (debug too)" FORCE)
-set(SQLite3_INCLUDE_DIR "/usr/x86_64-w64-mingw32/include" CACHE PATH
+set(SQLite3_INCLUDE_DIR "${MINGW_SYSROOT}/include" CACHE PATH
     "sqlite3 headers for the Qt wrap" FORCE)
 set(SQLite3_VERSION_STRING "3.54.1" CACHE STRING
     "sqlite3 version for the Qt wrap (pre-seeded, no run of the library needed)" FORCE)
 
 set(OPENSSL_USE_STATIC_LIBS ON CACHE BOOL "link static OpenSSL for the Qt wrap" FORCE)
-

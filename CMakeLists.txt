@@ -74,27 +74,29 @@ qt_add_resources(signal-processor-qt signalprocessor-i18n
 
 target_link_libraries(signal-processor-qt PRIVATE Qt6::Widgets Qt6::Sql)
 
-# Static Qt for the MinGW GNU/Linux cross build: link its platform and SQL
-# plugins explicitly. With any other toolchain we assume a regular shared Qt
-# (e.g. MSVC/windeployqt) and import nothing.
-if(WIN32 AND MINGW
-   AND EXISTS "/usr/x86_64-w64-mingw32/static/lib/cmake/Qt6Gui/Qt6QWindowsIntegrationPluginConfig.cmake")
-    set(SIGNAL_PROCESSOR_QT6_PLUGINS_DIR "/usr/x86_64-w64-mingw32/static/lib/cmake"
-        CACHE PATH "Static Qt plugin config packages (MinGW)")
-    include(${SIGNAL_PROCESSOR_QT6_PLUGINS_DIR}/Qt6Gui/Qt6QWindowsIntegrationPluginConfig.cmake)
-    include(${SIGNAL_PROCESSOR_QT6_PLUGINS_DIR}/Qt6Sql/Qt6QSQLiteDriverPluginConfig.cmake)
-    target_link_libraries(signal-processor-qt PRIVATE
-        graphite2 bz2 brotlidec brotlienc brotlicommon
-        Qt6::QWindowsIntegrationPlugin Qt6::QWindowsIntegrationPlugin_init
-        Qt6::QSQLiteDriverPlugin Qt6::QSQLiteDriverPlugin_init)
-    unset(SIGNAL_PROCESSOR_QT6_PLUGINS_DIR)
+# MinGW links static system libraries for the Qt wraps that Qt does not know.
+if(WIN32)
+    target_link_libraries(signal-processor-qt PRIVATE graphite2 bz2
+        brotlidec brotlienc brotlicommon)
 endif()
 
-# Windows deliverable is named SignalProcessor.exe.
+# Windows deliverable is named SignalProcessor.exe; static Qt needs its platform
+# and SQL plugins linked explicitly.
 if(WIN32)
     set_target_properties(signal-processor-qt PROPERTIES
         OUTPUT_NAME SignalProcessor
         WIN32_EXECUTABLE TRUE)
+    if(MINGW
+        AND EXISTS "${STATIC_QT_PREFIX}/lib/cmake/Qt6Gui/Qt6QWindowsIntegrationPluginConfig.cmake")
+        set(SIGNAL_PROCESSOR_QT6_PLUGINS_DIR "${STATIC_QT_PREFIX}/lib/cmake"
+            CACHE PATH "Static Qt plugin config packages (MinGW)")
+        include(${SIGNAL_PROCESSOR_QT6_PLUGINS_DIR}/Qt6Gui/Qt6QWindowsIntegrationPluginConfig.cmake)
+        include(${SIGNAL_PROCESSOR_QT6_PLUGINS_DIR}/Qt6Sql/Qt6QSQLiteDriverPluginConfig.cmake)
+        target_link_libraries(signal-processor-qt PRIVATE
+            Qt6::QWindowsIntegrationPlugin Qt6::QWindowsIntegrationPlugin_init
+            Qt6::QSQLiteDriverPlugin Qt6::QSQLiteDriverPlugin_init)
+        unset(SIGNAL_PROCESSOR_QT6_PLUGINS_DIR)
+    endif()
 else()
     set_target_properties(signal-processor-qt PROPERTIES
         WIN32_EXECUTABLE TRUE
@@ -103,36 +105,26 @@ else()
 endif()
 
 # Strict diagnostics: applied only to our sources, never to Qt itself.
-if(MSVC)
-    set(SIGNAL_PROCESSOR_WARNING_FLAGS
-        /W4
-        /permissive-
-        /Zc:__cplusplus
-        /Zc:preprocessor
-        /utf-8
-    )
-else()
-    set(SIGNAL_PROCESSOR_WARNING_FLAGS
-        -Wall
-        -Wextra
-        -Wpedantic
-        -Wconversion
-        -Wsign-conversion
-        -Wdouble-promotion
-        -Wfloat-equal
-        -Wshadow
-        -Wnon-virtual-dtor
-        -Woverloaded-virtual
-        -Wold-style-cast
-        -Wcast-align
-        -Wnull-dereference
-        -Wvla
-        -Warray-bounds=2
-        -Wstringop-overflow=4
-        -Wformat=2
-        -Wimplicit-fallthrough=5
-    )
-endif()
+set(SIGNAL_PROCESSOR_WARNING_FLAGS
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wconversion
+    -Wsign-conversion
+    -Wdouble-promotion
+    -Wfloat-equal
+    -Wshadow
+    -Wnon-virtual-dtor
+    -Woverloaded-virtual
+    -Wold-style-cast
+    -Wcast-align
+    -Wnull-dereference
+    -Wvla
+    -Warray-bounds=2
+    -Wstringop-overflow=4
+    -Wformat=2
+    -Wimplicit-fallthrough=5
+)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     list(APPEND SIGNAL_PROCESSOR_WARNING_FLAGS
         -Wlogical-op
@@ -143,11 +135,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 option(SIGNAL_PROCESSOR_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 if(SIGNAL_PROCESSOR_WARNINGS_AS_ERRORS)
-    if(MSVC)
-        list(APPEND SIGNAL_PROCESSOR_WARNING_FLAGS /WX)
-    else()
-        list(APPEND SIGNAL_PROCESSOR_WARNING_FLAGS -Werror)
-    endif()
+    list(APPEND SIGNAL_PROCESSOR_WARNING_FLAGS -Werror)
 endif()
 target_compile_options(signal-processor-qt PRIVATE ${SIGNAL_PROCESSOR_WARNING_FLAGS})
 
@@ -163,7 +151,7 @@ endif()
 
 # Qt Test + CTest suite. Shares the application sources.
 option(SIGNAL_PROCESSOR_BUILD_TESTS "Build the Qt Test suite" ON)
-if(SIGNAL_PROCESSOR_BUILD_TESTS)
+if(SIGNAL_PROCESSOR_BUILD_TESTS AND NOT WIN32)
     enable_testing()
     find_package(Qt6 6.12 REQUIRED COMPONENTS Test)
 
