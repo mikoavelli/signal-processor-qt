@@ -127,6 +127,10 @@ Two ways to produce a Windows build:
    prompt (or after `vcvars64.bat`): `cmake --preset release &&
    cmake --build --preset release`. `windeployqt` deploys the Qt runtime.
 
+## License
+
+MIT (see [LICENSE](LICENSE)).
+
 ## Project layout
 
 ```
