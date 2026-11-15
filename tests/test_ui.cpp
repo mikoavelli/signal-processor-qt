@@ -116,7 +116,7 @@ void TestUi::lineTemplateWidgetLifecycle() {
     widget.setTemplate(QStringLiteral("ЛВС {} - {}"));
     QVERIFY(!widget.isValid());
 
-    Q_UNUSED(widget.fullName());
+    Q_UNUSED(widget.fullName())
     widget.clearInputs();
 }
 

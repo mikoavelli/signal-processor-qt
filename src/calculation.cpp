@@ -44,8 +44,8 @@ double computePointRI(double q, double deltaA, double frequency) {
 
 double calculateIntermediateU(double resistance, double deltaF, double normNoise,
                               sp::LineType lineType) {
-    Q_UNUSED(resistance);
-    Q_UNUSED(deltaF);
+    Q_UNUSED(resistance)
+    Q_UNUSED(deltaF)
     switch (lineType) {
         case sp::LineType::Symmetrical:
         case sp::LineType::Asymmetrical:

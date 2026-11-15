@@ -16,6 +16,7 @@ class SignalProcessorError : public std::runtime_error {
 public:
     /// @brief Trivial destructor, defined out-of-line so the vtable lands in errors.cpp.
     ~SignalProcessorError() override;
+
 public:
     /// @brief Creates an error with an already translated message.
     /// @param message Text shown to the user.
@@ -42,6 +43,7 @@ class ConfigNotFoundError final : public ConfigError {
 public:
     /// @brief Trivial destructor, defined out-of-line so the vtable lands in errors.cpp.
     ~ConfigNotFoundError() override;
+
 public:
     /// @brief Creates the error for a missing file.
     /// @param path Path of the file that could not be found.
@@ -76,6 +78,7 @@ class SpectrumNotFoundError final : public SpectrumError {
 public:
     /// @brief Trivial destructor, defined out-of-line so the vtable lands in errors.cpp.
     ~SpectrumNotFoundError() override;
+
 public:
     /// @brief Creates the error for a missing file.
     /// @param path Path of the file that could not be found.
@@ -102,6 +105,7 @@ class SpectrumMissingFrequencyError final : public SpectrumError {
 public:
     /// @brief Trivial destructor, defined out-of-line so the vtable lands in errors.cpp.
     ~SpectrumMissingFrequencyError() override;
+
 public:
     /// @brief Creates the error with the file name and the missing frequencies, Hz.
     /// @param filename Name of the file that lacks the frequencies.

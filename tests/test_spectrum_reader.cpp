@@ -95,7 +95,7 @@ void TestSpectrumReader::missingFrequencies() {
     const QString path =
         writeFile(dir, QStringLiteral("incomplete.txt"), QStringLiteral("100.0\t1.0\n"));
     try {
-        Q_UNUSED(readRequiredFrequencies(path, {100.0, 200.0}));
+        Q_UNUSED(readRequiredFrequencies(path, {100.0, 200.0}))
         QFAIL("expected SpectrumMissingFrequencyError");
     } catch (const SpectrumMissingFrequencyError& error) {
         QCOMPARE(error.filename(), QStringLiteral("incomplete.txt"));

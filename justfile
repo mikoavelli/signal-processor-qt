@@ -1,5 +1,5 @@
 # Build commands for signal-processor-qt.
-# Presets live in CMakePresets.json: release, debug, san.
+# Presets live in CMakePresets.json: release, debug, san, windows.
 # Every preset treats compiler warnings as errors.
 # Windows: run from the "x64 Native Tools" prompt (or after vcvars64.bat).
 
