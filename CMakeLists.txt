@@ -35,6 +35,7 @@ set(SIGNAL_PROCESSOR_SOURCES
     src/i18n.h
     src/i18n.cpp
     src/errors.h
+    src/errors.cpp
     src/models.h
     src/models.cpp
     src/settings_store.h
@@ -246,6 +247,7 @@ if(SIGNAL_PROCESSOR_BUILD_TESTS AND NOT WIN32)
 
     set(SIGNAL_PROCESSOR_TESTABLE_SOURCES
         src/i18n.cpp
+        src/errors.cpp
         src/models.cpp
         src/settings_store.cpp
         src/spectrum_reader.cpp
