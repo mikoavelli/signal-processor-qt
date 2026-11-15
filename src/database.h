@@ -9,7 +9,7 @@
 /// @brief Creates the measurements database if it does not exist.
 /// @param dbPath Path of the SQLite database file.
 /// @throws DatabaseError If the database cannot be created or opened.
-void initDatabase(const QString &dbPath);
+void initDatabase(const QString& dbPath);
 
 /// @brief Saves one measurement and its points.
 /// @param dbPath Path of the SQLite database file.
@@ -24,7 +24,7 @@ void initDatabase(const QString &dbPath);
 /// @param result Calculation result to persist.
 /// @return The identifier of the created measurements row.
 /// @throws DatabaseError If the parameters are rejected, or the write fails.
-int saveMeasurement(const QString &dbPath, const QString &deviceName,
-    int category, int lineNumber, const QString &lineName, sp::LineType lineType,
-    const QString &operationMode, const QString &measurementType, double resistance,
-    const sp::CalculationResult &result);
+int saveMeasurement(const QString& dbPath, const QString& deviceName, int category, int lineNumber,
+                    const QString& lineName, sp::LineType lineType, const QString& operationMode,
+                    const QString& measurementType, double resistance,
+                    const sp::CalculationResult& result);

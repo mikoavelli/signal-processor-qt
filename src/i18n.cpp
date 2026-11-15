@@ -24,8 +24,7 @@ namespace tr_ns {
 namespace {
 
 /// @brief Returns the translation table, loading the json resource on first use.
-QHash<QString, QString> &table()
-{
+QHash<QString, QString>& table() {
     static QHash<QString, QString> cached = [] {
         QHash<QString, QString> map;
         QFile file(SP_TRANSLATION_RESOURCE);
@@ -52,8 +51,7 @@ QHash<QString, QString> &table()
 
 } // namespace
 
-QString tr(const char *key)
-{
+QString tr(const char* key) {
     const auto it = table().find(QLatin1String(key));
     return it == table().end() ? QString::fromLatin1(key) : it.value();
 }

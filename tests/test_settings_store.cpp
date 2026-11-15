@@ -17,8 +17,7 @@
 namespace {
 
 /// @brief Builds a valid settings document; tests mutate it before serializing.
-QJsonObject validDocument(int count = 1)
-{
+QJsonObject validDocument(int count = 1) {
     QJsonArray frequencies;
     QJsonArray deltaFI;
     QJsonArray kI;
@@ -63,13 +62,12 @@ QJsonObject validDocument(int count = 1)
     root.insert(QStringLiteral("norm_noise_by_line"), normNoise);
     root.insert(QStringLiteral("line"), line);
     root.insert(QStringLiteral("operation_modes"),
-        QJsonArray{QStringLiteral("XX"), QStringLiteral("DR"), QStringLiteral("RR")});
+                QJsonArray{QStringLiteral("XX"), QStringLiteral("DR"), QStringLiteral("RR")});
     return root;
 }
 
 /// @brief Serializes @p document into a fresh temporary settings.json.
-QString writeConfig(const QTemporaryDir &dir, const QJsonObject &document)
-{
+QString writeConfig(const QTemporaryDir& dir, const QJsonObject& document) {
     const QString path = dir.filePath(QStringLiteral("settings.json"));
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -80,8 +78,7 @@ QString writeConfig(const QTemporaryDir &dir, const QJsonObject &document)
 }
 
 /// @brief Writes raw bytes into a fresh temporary settings.json.
-QString writeRawConfig(const QTemporaryDir &dir, const QByteArray &content)
-{
+QString writeRawConfig(const QTemporaryDir& dir, const QByteArray& content) {
     const QString path = dir.filePath(QStringLiteral("settings.json"));
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -110,31 +107,27 @@ private slots:
     void emptyOperationModesThrow();
 };
 
-void TestSettingsStore::loadValidConfig()
-{
+void TestSettingsStore::loadValidConfig() {
     QTemporaryDir dir;
     const QString path = writeConfig(dir, validDocument());
     const sp::AppConfig config = sp::settings_store::loadConfig(path);
     QCOMPARE(config.frequencyConstants.numberOfConstants, 1);
 }
 
-void TestSettingsStore::missingFileThrows()
-{
+void TestSettingsStore::missingFileThrows() {
     QTemporaryDir dir;
     QVERIFY_EXCEPTION_THROWN(
         sp::settings_store::loadConfig(dir.filePath(QStringLiteral("absent.json"))),
         ConfigNotFoundError);
 }
 
-void TestSettingsStore::syntaxErrorThrows()
-{
+void TestSettingsStore::syntaxErrorThrows() {
     QTemporaryDir dir;
     const QString path = writeRawConfig(dir, QByteArray("broken = [unclosed"));
     QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
 }
 
-void TestSettingsStore::zeroNumberOfConstantsThrows()
-{
+void TestSettingsStore::zeroNumberOfConstantsThrows() {
     QTemporaryDir dir;
     QJsonObject document = validDocument();
     QJsonObject frequency = document.value(QStringLiteral("frequency_constants")).toObject();
@@ -144,8 +137,7 @@ void TestSettingsStore::zeroNumberOfConstantsThrows()
     QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
 }
 
-void TestSettingsStore::constantsLengthMismatchThrows()
-{
+void TestSettingsStore::constantsLengthMismatchThrows() {
     QTemporaryDir dir;
     QJsonObject document = validDocument(2);
     QJsonObject frequency = document.value(QStringLiteral("frequency_constants")).toObject();
@@ -155,8 +147,7 @@ void TestSettingsStore::constantsLengthMismatchThrows()
     QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
 }
 
-void TestSettingsStore::nonNumericFloatListThrows()
-{
+void TestSettingsStore::nonNumericFloatListThrows() {
     QTemporaryDir dir;
     QJsonObject document = validDocument();
     QJsonObject frequency = document.value(QStringLiteral("frequency_constants")).toObject();
@@ -166,8 +157,7 @@ void TestSettingsStore::nonNumericFloatListThrows()
     QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
 }
 
-void TestSettingsStore::lineNoiseLengthMismatchThrows()
-{
+void TestSettingsStore::lineNoiseLengthMismatchThrows() {
     QTemporaryDir dir;
     QJsonObject document = validDocument(1);
     QJsonObject noise = document.value(QStringLiteral("norm_noise_by_line")).toObject();
@@ -177,8 +167,7 @@ void TestSettingsStore::lineNoiseLengthMismatchThrows()
     QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
 }
 
-void TestSettingsStore::projectRootSettingsIsValid()
-{
+void TestSettingsStore::projectRootSettingsIsValid() {
     const QString settingsPath =
         QString::fromUtf8(SIGNAL_PROCESSOR_SOURCE_DIR) + QStringLiteral("/settings.json");
     const sp::AppConfig config = sp::settings_store::loadConfig(settingsPath);
@@ -187,8 +176,7 @@ void TestSettingsStore::projectRootSettingsIsValid()
     QCOMPARE(config.frequencyConstants.fI.size(), count);
 }
 
-void TestSettingsStore::negativeFrequenciesThrow()
-{
+void TestSettingsStore::negativeFrequenciesThrow() {
     QTemporaryDir dir;
     QJsonObject document = validDocument();
     QJsonObject frequency = document.value(QStringLiteral("frequency_constants")).toObject();
@@ -198,8 +186,7 @@ void TestSettingsStore::negativeFrequenciesThrow()
     QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
 }
 
-void TestSettingsStore::negativeNormNoiseThrows()
-{
+void TestSettingsStore::negativeNormNoiseThrows() {
     QTemporaryDir dir;
     QJsonObject document = validDocument();
     QJsonObject noise = document.value(QStringLiteral("norm_noise_by_line")).toObject();
@@ -209,8 +196,7 @@ void TestSettingsStore::negativeNormNoiseThrows()
     QVERIFY_EXCEPTION_THROWN(sp::settings_store::loadConfig(path), ConfigValidationError);
 }
 
-void TestSettingsStore::emptyOperationModesThrow()
-{
+void TestSettingsStore::emptyOperationModesThrow() {
     QTemporaryDir dir;
     QJsonObject document = validDocument();
     document.insert(QStringLiteral("operation_modes"), QJsonArray{});

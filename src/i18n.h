@@ -19,7 +19,7 @@ namespace tr_ns {
 /// A missing key falls back to the key itself, so that a missing line does not
 /// turn into text in another language.
 /// @param key Translation key from the compiled json resource.
-QString tr(const char *key);
+QString tr(const char* key);
 
 /// @brief Helpers for @ref tr.
 namespace detail {
@@ -27,12 +27,10 @@ namespace detail {
 /// @brief Converts one substitution argument to text.
 /// @param value QString, UTF-8 string or a number.
 /// @return Text representation of the argument.
-template <typename T>
-inline QString toStr(const T &value)
-{
+template <typename T> inline QString toStr(const T& value) {
     if constexpr (std::is_same_v<std::decay_t<T>, QString>) {
         return value;
-    } else if constexpr (std::is_convertible_v<T, const char *>) {
+    } else if constexpr (std::is_convertible_v<T, const char*>) {
         return QString::fromUtf8(value);
     } else {
         return QString::number(value);
@@ -45,10 +43,8 @@ inline QString toStr(const T &value)
 /// @param key Translation key.
 /// @param args Values for the placeholders, in order.
 /// @return Translated text with the placeholders replaced.
-template <typename... Args>
-QString tr(const char *key, const Args &...args)
-{
-    QString parts[] = { detail::toStr(args)... };
+template <typename... Args> QString tr(const char* key, const Args&... args) {
+    QString parts[] = {detail::toStr(args)...};
     QString result = tr(key);
     int index = static_cast<int>(sizeof...(args));
     while (index >= 1) {

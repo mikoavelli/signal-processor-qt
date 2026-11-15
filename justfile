@@ -139,6 +139,22 @@ windows package_dir="build/package":
 list:
     @just --list
 
+# Format all sources with clang-format.
+fmt:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    find src tests \( -name '*.h' -o -name '*.cpp' \) | sort | xargs clang-format -i
+
+# Verify sources are formatted (no changes produced).
+fmt-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{source_directory()}}"
+    if ! find src tests \( -name '*.h' -o -name '*.cpp' \) | sort | xargs clang-format --Werror -n >/dev/null; then
+        echo "clang-format: sources are not formatted (run 'just fmt')" >&2
+        exit 1
+    fi
+
 # --- internals ---------------------------------------------------------------
 
 _check_preset preset:

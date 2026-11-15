@@ -24,17 +24,20 @@
 
 namespace sp::settings_store {
 
-
 namespace {
 
 using Qt::Literals::StringLiterals::operator""_s;
 
 /// @brief Keys allowed in the root object of settings.json.
-const QStringList rootKeys = {u"schema_version"_s, u"frequency_constants"_s,
-    u"norm_params_by_category"_s, u"norm_noise_by_line"_s, u"line"_s, u"operation_modes"_s};
+const QStringList rootKeys = {u"schema_version"_s,
+                              u"frequency_constants"_s,
+                              u"norm_params_by_category"_s,
+                              u"norm_noise_by_line"_s,
+                              u"line"_s,
+                              u"operation_modes"_s};
 /// @brief Keys allowed in the “frequency_constants” object.
-const QStringList frequencyKeys = {u"number_of_constants"_s, u"f_i"_s, u"delta_f_i"_s,
-    u"k_i"_s, u"delta_a_i"_s};
+const QStringList frequencyKeys = {u"number_of_constants"_s, u"f_i"_s, u"delta_f_i"_s, u"k_i"_s,
+                                   u"delta_a_i"_s};
 /// @brief Keys allowed in the “norm_params_by_category” object.
 const QStringList normParamsKeys = {u"delta_stn"_s, u"w_n"_s};
 /// @brief Keys allowed in the “norm_noise_by_line” object.
@@ -46,10 +49,9 @@ const QStringList lineKeys = {u"symmetrical"_s, u"asymmetrical"_s, u"power"_s};
 /// @param object Object to inspect.
 /// @param allowed Allowed keys.
 /// @param where Path of the object for error messages.
-void checkKeys(const QJsonObject &object, const QStringList &allowed, const QString &where)
-{
+void checkKeys(const QJsonObject& object, const QStringList& allowed, const QString& where) {
     QStringList missing;
-    for (const QString &key : allowed) {
+    for (const QString& key : allowed) {
         if (!object.contains(key)) {
             missing.append(key);
         }
@@ -58,7 +60,7 @@ void checkKeys(const QJsonObject &object, const QStringList &allowed, const QStr
         throw ConfigValidationError(tr_ns::tr("err.keysMissing", where, missing.join(u", "_s)));
     }
     QStringList unknown;
-    for (const QString &key : object.keys()) {
+    for (const QString& key : object.keys()) {
         if (!allowed.contains(key)) {
             unknown.append(key);
         }
@@ -72,8 +74,7 @@ void checkKeys(const QJsonObject &object, const QStringList &allowed, const QStr
 /// @param value Value to parse.
 /// @param where Path of the value for error messages.
 /// @return The parsed number.
-double asFiniteNumber(const QJsonValue &value, const QString &where)
-{
+double asFiniteNumber(const QJsonValue& value, const QString& where) {
     if (!value.isDouble()) {
         throw ConfigValidationError(tr_ns::tr("err.numberExpected", where));
     }
@@ -88,8 +89,7 @@ double asFiniteNumber(const QJsonValue &value, const QString &where)
 /// @param value Value to parse.
 /// @param where Path of the value for error messages.
 /// @return The parsed number.
-double asNonNegativeNumber(const QJsonValue &value, const QString &where)
-{
+double asNonNegativeNumber(const QJsonValue& value, const QString& where) {
     const double number = asFiniteNumber(value, where);
     if (number < 0.0) {
         throw ConfigValidationError(tr_ns::tr("err.numberNegative", where));
@@ -102,9 +102,8 @@ double asNonNegativeNumber(const QJsonValue &value, const QString &where)
 /// @param where Path of the value for error messages.
 /// @param check Per-element validator (must throw on unacceptable values).
 /// @return The parsed numbers.
-QVector<double> asNumberArray(const QJsonValue &value, const QString &where,
-    double (*check)(const QJsonValue &, const QString &))
-{
+QVector<double> asNumberArray(const QJsonValue& value, const QString& where,
+                              double (*check)(const QJsonValue&, const QString&)) {
     if (!value.isArray()) {
         throw ConfigValidationError(tr_ns::tr("err.listExpected", where));
     }
@@ -121,8 +120,7 @@ QVector<double> asNumberArray(const QJsonValue &value, const QString &where,
 }
 
 /// @brief Parses a non-negative number per element.
-QVector<double> asNonNegativeNumberArray(const QJsonValue &value, const QString &where)
-{
+QVector<double> asNonNegativeNumberArray(const QJsonValue& value, const QString& where) {
     return asNumberArray(value, where, asNonNegativeNumber);
 }
 
@@ -130,8 +128,7 @@ QVector<double> asNonNegativeNumberArray(const QJsonValue &value, const QString 
 /// @param value Value to parse.
 /// @param where Path of the value for error messages.
 /// @return The parsed strings.
-QStringList asStringList(const QJsonValue &value, const QString &where)
-{
+QStringList asStringList(const QJsonValue& value, const QString& where) {
     if (!value.isArray()) {
         throw ConfigValidationError(tr_ns::tr("err.listExpected", where));
     }
@@ -144,11 +141,13 @@ QStringList asStringList(const QJsonValue &value, const QString &where)
     for (int index = 0; index < array.size(); ++index) {
         const QJsonValue item = array.at(index);
         if (!item.isString()) {
-            throw ConfigValidationError(tr_ns::tr("err.stringExpected", where + u"[%1]"_s.arg(index)));
+            throw ConfigValidationError(
+                tr_ns::tr("err.stringExpected", where + u"[%1]"_s.arg(index)));
         }
         const QString text = item.toString();
         if (text.trimmed().isEmpty()) {
-            throw ConfigValidationError(tr_ns::tr("err.stringNotEmpty", where + u"[%1]"_s.arg(index)));
+            throw ConfigValidationError(
+                tr_ns::tr("err.stringNotEmpty", where + u"[%1]"_s.arg(index)));
         }
         result.append(text);
     }
@@ -159,8 +158,7 @@ QStringList asStringList(const QJsonValue &value, const QString &where)
 /// @param value Value to parse.
 /// @param where Path of the object for error messages.
 /// @return The parsed object.
-QJsonObject asObject(const QJsonValue &value, const QString &where)
-{
+QJsonObject asObject(const QJsonValue& value, const QString& where) {
     if (!value.isObject()) {
         throw ConfigValidationError(tr_ns::tr("err.objectExpected", where));
     }
@@ -168,18 +166,16 @@ QJsonObject asObject(const QJsonValue &value, const QString &where)
 }
 
 /// @brief Requires a vector of a given length.
-void requireLength(const QVector<double> &vector, int expected, const QString &where)
-{
+void requireLength(const QVector<double>& vector, int expected, const QString& where) {
     if (vector.size() != expected) {
         throw ConfigValidationError(tr_ns::tr("err.listLength", where, QString::number(expected),
-            QString::number(vector.size())));
+                                              QString::number(vector.size())));
     }
 }
 
 } // namespace
 
-AppConfig loadConfig(const QString &settingsPath)
-{
+AppConfig loadConfig(const QString& settingsPath) {
     const QFileInfo info(settingsPath);
     if (!info.exists() || !info.isFile()) {
         throw ConfigNotFoundError(settingsPath);
@@ -218,8 +214,9 @@ AppConfig loadConfig(const QString &settingsPath)
         throw ConfigValidationError(tr_ns::tr("err.intExpected", u"schema_version"_s));
     }
     if (static_cast<int>(version) != schemaVersion) {
-        throw ConfigValidationError(tr_ns::tr("err.configVersion", QString::number(static_cast<int>(version)),
-            QString::number(schemaVersion)));
+        throw ConfigValidationError(tr_ns::tr("err.configVersion",
+                                              QString::number(static_cast<int>(version)),
+                                              QString::number(schemaVersion)));
     }
 
     // --- frequency_constants -------------------------------------------------
@@ -229,33 +226,36 @@ AppConfig loadConfig(const QString &settingsPath)
 
     const QJsonValue countValue = frequencyObject.value(u"number_of_constants"_s);
     if (!countValue.isDouble()) {
-        throw ConfigValidationError(tr_ns::tr("err.intExpected", u"frequency_constants.number_of_constants"_s));
+        throw ConfigValidationError(
+            tr_ns::tr("err.intExpected", u"frequency_constants.number_of_constants"_s));
     }
     const double countDouble = countValue.toDouble();
     if (!qFuzzyIsNull(countDouble - std::trunc(countDouble))) {
-        throw ConfigValidationError(tr_ns::tr("err.intExpected",
-            u"frequency_constants.number_of_constants"_s));
+        throw ConfigValidationError(
+            tr_ns::tr("err.intExpected", u"frequency_constants.number_of_constants"_s));
     }
     const int numberOfConstants = static_cast<int>(countDouble);
     if (numberOfConstants <= 0) {
-        throw ConfigValidationError(tr_ns::tr("err.numberNotPositive",
-            u"frequency_constants.number_of_constants"_s));
+        throw ConfigValidationError(
+            tr_ns::tr("err.numberNotPositive", u"frequency_constants.number_of_constants"_s));
     }
 
     FrequencyConstantsConfig frequencyConstants;
     frequencyConstants.numberOfConstants = numberOfConstants;
-    frequencyConstants.fI = asNonNegativeNumberArray(frequencyObject.value(u"f_i"_s),
-        u"frequency_constants.f_i"_s);
+    frequencyConstants.fI =
+        asNonNegativeNumberArray(frequencyObject.value(u"f_i"_s), u"frequency_constants.f_i"_s);
     frequencyConstants.deltaFI = asNonNegativeNumberArray(frequencyObject.value(u"delta_f_i"_s),
-        u"frequency_constants.delta_f_i"_s);
-    frequencyConstants.kI = asNonNegativeNumberArray(frequencyObject.value(u"k_i"_s),
-        u"frequency_constants.k_i"_s);
+                                                          u"frequency_constants.delta_f_i"_s);
+    frequencyConstants.kI =
+        asNonNegativeNumberArray(frequencyObject.value(u"k_i"_s), u"frequency_constants.k_i"_s);
     frequencyConstants.deltaAI = asNonNegativeNumberArray(frequencyObject.value(u"delta_a_i"_s),
-        u"frequency_constants.delta_a_i"_s);
+                                                          u"frequency_constants.delta_a_i"_s);
     requireLength(frequencyConstants.fI, numberOfConstants, u"frequency_constants.f_i"_s);
-    requireLength(frequencyConstants.deltaFI, numberOfConstants, u"frequency_constants.delta_f_i"_s);
+    requireLength(frequencyConstants.deltaFI, numberOfConstants,
+                  u"frequency_constants.delta_f_i"_s);
     requireLength(frequencyConstants.kI, numberOfConstants, u"frequency_constants.k_i"_s);
-    requireLength(frequencyConstants.deltaAI, numberOfConstants, u"frequency_constants.delta_a_i"_s);
+    requireLength(frequencyConstants.deltaAI, numberOfConstants,
+                  u"frequency_constants.delta_a_i"_s);
 
     // --- norm_params_by_category --------------------------------------------
     const QJsonObject normParamsObject =
@@ -263,9 +263,9 @@ AppConfig loadConfig(const QString &settingsPath)
     checkKeys(normParamsObject, normParamsKeys, u"norm_params_by_category"_s);
     NormParamsConfig normParams;
     normParams.deltaStn = asNonNegativeNumberArray(normParamsObject.value(u"delta_stn"_s),
-        u"norm_params_by_category.delta_stn"_s);
+                                                   u"norm_params_by_category.delta_stn"_s);
     normParams.wN = asNonNegativeNumberArray(normParamsObject.value(u"w_n"_s),
-        u"norm_params_by_category.w_n"_s);
+                                             u"norm_params_by_category.w_n"_s);
 
     // --- norm_noise_by_line ---------------------------------------------------
     const QJsonObject noiseObject =
@@ -273,15 +273,15 @@ AppConfig loadConfig(const QString &settingsPath)
     checkKeys(noiseObject, normNoiseKeys, u"norm_noise_by_line"_s);
     NormNoiseByLineConfig normNoiseByLine;
     normNoiseByLine.symmetrical = asNonNegativeNumberArray(noiseObject.value(u"symmetrical"_s),
-        u"norm_noise_by_line.symmetrical"_s);
+                                                           u"norm_noise_by_line.symmetrical"_s);
     normNoiseByLine.asymmetrical = asNonNegativeNumberArray(noiseObject.value(u"asymmetrical"_s),
-        u"norm_noise_by_line.asymmetrical"_s);
-    normNoiseByLine.power = asNonNegativeNumberArray(noiseObject.value(u"power"_s),
-        u"norm_noise_by_line.power"_s);
+                                                            u"norm_noise_by_line.asymmetrical"_s);
+    normNoiseByLine.power =
+        asNonNegativeNumberArray(noiseObject.value(u"power"_s), u"norm_noise_by_line.power"_s);
     requireLength(normNoiseByLine.symmetrical, numberOfConstants,
-        u"norm_noise_by_line.symmetrical"_s);
+                  u"norm_noise_by_line.symmetrical"_s);
     requireLength(normNoiseByLine.asymmetrical, numberOfConstants,
-        u"norm_noise_by_line.asymmetrical"_s);
+                  u"norm_noise_by_line.asymmetrical"_s);
     requireLength(normNoiseByLine.power, numberOfConstants, u"norm_noise_by_line.power"_s);
 
     // --- line ------------------------------------------------------------------

@@ -6,15 +6,13 @@
 
 namespace sp::ui {
 
-DoubleValidator::DoubleValidator(double bottom, double top, int decimals, QObject *parent)
-    : QDoubleValidator(bottom, top, decimals, parent)
-{
+DoubleValidator::DoubleValidator(double bottom, double top, int decimals, QObject* parent)
+    : QDoubleValidator(bottom, top, decimals, parent) {
     setLocale(QLocale::c());
     setNotation(QDoubleValidator::StandardNotation);
 }
 
-QValidator::State DoubleValidator::validate(QString &input, int &pos) const
-{
+QValidator::State DoubleValidator::validate(QString& input, int& pos) const {
     QString normalized = input;
     normalized.replace(u',', u'.');
     int normalizedPos = pos;

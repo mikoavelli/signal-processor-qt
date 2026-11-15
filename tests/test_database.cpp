@@ -16,8 +16,7 @@
 namespace {
 
 /// @brief Builds a mock result with 20 points.
-sp::CalculationResult makeMockResult(bool hasViolations = false)
-{
+sp::CalculationResult makeMockResult(bool hasViolations = false) {
     sp::CalculationResult result;
     result.hasViolations = hasViolations;
     result.measurementType = sp::MeasurementKind::Voltage;
@@ -43,9 +42,9 @@ sp::CalculationResult makeMockResult(bool hasViolations = false)
 }
 
 /// @brief Opens a raw connection for verification queries.
-QSqlDatabase openRaw(const QString &dbPath)
-{
-    const QString name = QStringLiteral("raw_%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+QSqlDatabase openRaw(const QString& dbPath) {
+    const QString name =
+        QStringLiteral("raw_%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
     QSqlDatabase database = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), name);
     database.setDatabaseName(dbPath);
     if (!database.open()) {
@@ -54,8 +53,7 @@ QSqlDatabase openRaw(const QString &dbPath)
     return database;
 }
 
-void closeRaw(QSqlDatabase &database)
-{
+void closeRaw(QSqlDatabase& database) {
     const QString name = database.connectionName();
     database.close();
     database = QSqlDatabase();
@@ -76,8 +74,7 @@ private slots:
     void rejectsInvalidCategory();
 };
 
-void TestDatabase::initCreatesTablesAndIndex()
-{
+void TestDatabase::initCreatesTablesAndIndex() {
     QTemporaryDir dir;
     const QString dbPath = dir.filePath(QStringLiteral("test.db"));
     initDatabase(dbPath);
@@ -89,51 +86,48 @@ void TestDatabase::initCreatesTablesAndIndex()
     QVERIFY(query.next());
     QCOMPARE(query.value(0).toInt(), 1);
 
-    QVERIFY(query.exec(QStringLiteral(
-        "SELECT COUNT(*) FROM sqlite_master WHERE type='index'"
-        " AND name='idx_measurement_points_measurement_id'")));
+    QVERIFY(query.exec(QStringLiteral("SELECT COUNT(*) FROM sqlite_master WHERE type='index'"
+                                      " AND name='idx_measurement_points_measurement_id'")));
     QVERIFY(query.next());
     QCOMPARE(query.value(0).toInt(), 1);
     closeRaw(raw);
 }
 
-void TestDatabase::initInvalidPathThrows()
-{
+void TestDatabase::initInvalidPathThrows() {
     QTemporaryDir dir;
     QVERIFY_EXCEPTION_THROWN(initDatabase(dir.path()), DatabaseError);
 }
 
-void TestDatabase::savePersistsData()
-{
+void TestDatabase::savePersistsData() {
     QTemporaryDir dir;
     const QString dbPath = dir.filePath(QStringLiteral("test.db"));
     initDatabase(dbPath);
     const sp::CalculationResult result = makeMockResult(/*hasViolations=*/true);
 
-    const int measId = saveMeasurement(dbPath, QStringLiteral("TestDevice"), 1, 1,
-        QStringLiteral("Line 1"), sp::LineType::Power, QStringLiteral("XX"),
-        QStringLiteral("voltage"), 50.0, result);
+    const int measId = saveMeasurement(
+        dbPath, QStringLiteral("TestDevice"), 1, 1, QStringLiteral("Line 1"), sp::LineType::Power,
+        QStringLiteral("XX"), QStringLiteral("voltage"), 50.0, result);
     QVERIFY(measId > 0);
 
     QSqlDatabase raw = openRaw(dbPath);
     QSqlQuery query(raw);
-    QVERIFY(query.exec(QStringLiteral(
-        "SELECT COUNT(*) FROM measurement_points WHERE measurement_id = %1").arg(measId)));
+    QVERIFY(query.exec(
+        QStringLiteral("SELECT COUNT(*) FROM measurement_points WHERE measurement_id = %1")
+            .arg(measId)));
     QVERIFY(query.next());
     QCOMPARE(query.value(0).toInt(), 20);
     closeRaw(raw);
 }
 
-void TestDatabase::cascadingDelete()
-{
+void TestDatabase::cascadingDelete() {
     QTemporaryDir dir;
     const QString dbPath = dir.filePath(QStringLiteral("test.db"));
     initDatabase(dbPath);
     const sp::CalculationResult result = makeMockResult();
 
-    const int measId = saveMeasurement(dbPath, QStringLiteral("TestDevice"), 1, 1,
-        QStringLiteral("Line 1"), sp::LineType::Power, QStringLiteral("XX"),
-        QStringLiteral("voltage"), 50.0, result);
+    const int measId = saveMeasurement(
+        dbPath, QStringLiteral("TestDevice"), 1, 1, QStringLiteral("Line 1"), sp::LineType::Power,
+        QStringLiteral("XX"), QStringLiteral("voltage"), 50.0, result);
 
     QSqlDatabase raw = openRaw(dbPath);
     QSqlQuery pragma(raw);
@@ -142,37 +136,38 @@ void TestDatabase::cascadingDelete()
     QVERIFY(deleteQuery.exec(QStringLiteral("DELETE FROM measurements WHERE id = %1").arg(measId)));
 
     QSqlQuery countQuery(raw);
-    QVERIFY(countQuery.exec(QStringLiteral(
-        "SELECT COUNT(*) FROM measurement_points WHERE measurement_id = %1").arg(measId)));
+    QVERIFY(countQuery.exec(
+        QStringLiteral("SELECT COUNT(*) FROM measurement_points WHERE measurement_id = %1")
+            .arg(measId)));
     QVERIFY(countQuery.next());
     QCOMPARE(countQuery.value(0).toInt(), 0);
     closeRaw(raw);
 }
 
-void TestDatabase::rejectsNonPositiveLineNumber()
-{
+void TestDatabase::rejectsNonPositiveLineNumber() {
     QTemporaryDir dir;
     const QString dbPath = dir.filePath(QStringLiteral("test.db"));
     initDatabase(dbPath);
     const sp::CalculationResult result = makeMockResult();
 
-    QVERIFY_EXCEPTION_THROWN(
-        saveMeasurement(dbPath, QStringLiteral("Device"), 1, 0, QStringLiteral("Line 1"),
-            sp::LineType::Power, QStringLiteral("XX"), QStringLiteral("voltage"), 50.0, result),
-        DatabaseError);
+    QVERIFY_EXCEPTION_THROWN(saveMeasurement(dbPath, QStringLiteral("Device"), 1, 0,
+                                             QStringLiteral("Line 1"), sp::LineType::Power,
+                                             QStringLiteral("XX"), QStringLiteral("voltage"), 50.0,
+                                             result),
+                             DatabaseError);
 }
 
-void TestDatabase::rejectsInvalidCategory()
-{
+void TestDatabase::rejectsInvalidCategory() {
     QTemporaryDir dir;
     const QString dbPath = dir.filePath(QStringLiteral("test.db"));
     initDatabase(dbPath);
     const sp::CalculationResult result = makeMockResult();
 
-    QVERIFY_EXCEPTION_THROWN(
-        saveMeasurement(dbPath, QStringLiteral("Device"), -1, 1, QStringLiteral("Line 1"),
-            sp::LineType::Power, QStringLiteral("XX"), QStringLiteral("voltage"), 50.0, result),
-        DatabaseError);
+    QVERIFY_EXCEPTION_THROWN(saveMeasurement(dbPath, QStringLiteral("Device"), -1, 1,
+                                             QStringLiteral("Line 1"), sp::LineType::Power,
+                                             QStringLiteral("XX"), QStringLiteral("voltage"), 50.0,
+                                             result),
+                             DatabaseError);
 }
 
 QTEST_MAIN(TestDatabase)

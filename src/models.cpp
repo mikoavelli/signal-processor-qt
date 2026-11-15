@@ -4,21 +4,19 @@
 
 namespace sp {
 
-QString lineTypeToString(LineType lineType)
-{
+QString lineTypeToString(LineType lineType) {
     switch (lineType) {
-    case LineType::Symmetrical:
-        return QStringLiteral("symmetrical");
-    case LineType::Asymmetrical:
-        return QStringLiteral("asymmetrical");
-    case LineType::Power:
-        return QStringLiteral("power");
+        case LineType::Symmetrical:
+            return QStringLiteral("symmetrical");
+        case LineType::Asymmetrical:
+            return QStringLiteral("asymmetrical");
+        case LineType::Power:
+            return QStringLiteral("power");
     }
     return QString(); // unreachable: all enumerators are handled
 }
 
-std::optional<LineType> lineTypeFromString(const QString &text)
-{
+std::optional<LineType> lineTypeFromString(const QString& text) {
     if (text == QLatin1StringView("symmetrical")) {
         return LineType::Symmetrical;
     }
@@ -31,19 +29,17 @@ std::optional<LineType> lineTypeFromString(const QString &text)
     return std::nullopt;
 }
 
-QString measurementKindToString(MeasurementKind measurementType)
-{
+QString measurementKindToString(MeasurementKind measurementType) {
     switch (measurementType) {
-    case MeasurementKind::Voltage:
-        return QStringLiteral("voltage");
-    case MeasurementKind::Current:
-        return QStringLiteral("current");
+        case MeasurementKind::Voltage:
+            return QStringLiteral("voltage");
+        case MeasurementKind::Current:
+            return QStringLiteral("current");
     }
     return QString(); // unreachable: all enumerators are handled
 }
 
-std::optional<MeasurementKind> measurementKindFromString(const QString &text)
-{
+std::optional<MeasurementKind> measurementKindFromString(const QString& text) {
     if (text == QLatin1StringView("voltage")) {
         return MeasurementKind::Voltage;
     }
@@ -53,15 +49,14 @@ std::optional<MeasurementKind> measurementKindFromString(const QString &text)
     return std::nullopt;
 }
 
-const QVector<double> &lineNoise(const NormNoiseByLineConfig &config, LineType lineType) noexcept
-{
+const QVector<double>& lineNoise(const NormNoiseByLineConfig& config, LineType lineType) noexcept {
     switch (lineType) {
-    case LineType::Symmetrical:
-        return config.symmetrical;
-    case LineType::Asymmetrical:
-        return config.asymmetrical;
-    case LineType::Power:
-        return config.power;
+        case LineType::Symmetrical:
+            return config.symmetrical;
+        case LineType::Asymmetrical:
+            return config.asymmetrical;
+        case LineType::Power:
+            return config.power;
     }
     return config.power; // unreachable: all enumerators are handled
 }

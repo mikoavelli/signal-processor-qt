@@ -14,8 +14,7 @@ namespace {
 
 /// @brief Builds a mock configuration with 20 (or @p count) control constants.
 sp::AppConfig makeMockConfig(int count = 20, double deltaStn = 2.0, double wN = 1000.0,
-    const QVector<double> &frequencies = {})
-{
+                             const QVector<double>& frequencies = {}) {
     QVector<double> fI;
     if (frequencies.isEmpty()) {
         for (int index = 1; index <= count; ++index) {
@@ -43,9 +42,8 @@ sp::AppConfig makeMockConfig(int count = 20, double deltaStn = 2.0, double wN = 
 }
 
 /// @brief Writes the mock spectrum files and returns their paths.
-std::pair<QString, QString> writeSpectrumFiles(const QTemporaryDir &dir, int count = 20,
-    double signalNoise = 5.0, double noise = 3.0)
-{
+std::pair<QString, QString> writeSpectrumFiles(const QTemporaryDir& dir, int count = 20,
+                                               double signalNoise = 5.0, double noise = 3.0) {
     const QString signalNoisePath = dir.filePath(QStringLiteral("signal_noise.txt"));
     const QString noisePath = dir.filePath(QStringLiteral("noise.txt"));
     QStringList signalNoiseLines;
@@ -54,8 +52,8 @@ std::pair<QString, QString> writeSpectrumFiles(const QTemporaryDir &dir, int cou
         signalNoiseLines.append(QStringLiteral("%1.0\t%2").arg(index).arg(signalNoise, 0, 'f', 4));
         noiseLines.append(QStringLiteral("%1.0\t%2").arg(index).arg(noise, 0, 'f', 4));
     }
-    for (const auto &[path, lines] : {std::pair{&signalNoisePath, &signalNoiseLines},
-             std::pair{&noisePath, &noiseLines}}) {
+    for (const auto& [path, lines] :
+         {std::pair{&signalNoisePath, &signalNoiseLines}, std::pair{&noisePath, &noiseLines}}) {
         QFile file(*path);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             qFatal("cannot write %s", qPrintable(*path));
@@ -85,14 +83,14 @@ private slots:
     void rejectsExcessiveResistanceLimit();
 };
 
-void TestCalculation::voltageWithoutViolations()
-{
+void TestCalculation::voltageWithoutViolations() {
     QTemporaryDir dir;
     const auto [signalNoisePath, noisePath] = writeSpectrumFiles(dir, 20, 2.0, 1.9);
     const sp::AppConfig config = makeMockConfig(20, 10.0);
 
-    const sp::CalculationResult result = calculate(signalNoisePath, noisePath, config, 0,
-        sp::LineType::Power, sp::MeasurementKind::Voltage, 50.0);
+    const sp::CalculationResult result =
+        calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                  sp::MeasurementKind::Voltage, 50.0);
 
     QVERIFY(!result.hasViolations);
     QCOMPARE(result.measurementType, sp::MeasurementKind::Voltage);
@@ -103,14 +101,14 @@ void TestCalculation::voltageWithoutViolations()
     QVERIFY(!result.points.at(0).rI.has_value());
 }
 
-void TestCalculation::voltageWithViolations()
-{
+void TestCalculation::voltageWithViolations() {
     QTemporaryDir dir;
     const auto [signalNoisePath, noisePath] = writeSpectrumFiles(dir, 20, 5.0, 1.0);
     const sp::AppConfig config = makeMockConfig(20, 1.0, 10.0);
 
-    const sp::CalculationResult result = calculate(signalNoisePath, noisePath, config, 0,
-        sp::LineType::Power, sp::MeasurementKind::Voltage, 50.0);
+    const sp::CalculationResult result =
+        calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                  sp::MeasurementKind::Voltage, 50.0);
 
     QVERIFY(result.hasViolations);
     QVERIFY(result.w.has_value());
@@ -119,71 +117,63 @@ void TestCalculation::voltageWithViolations()
     QVERIFY(result.points.at(0).rI.has_value());
 }
 
-void TestCalculation::currentMeasurementType()
-{
+void TestCalculation::currentMeasurementType() {
     QTemporaryDir dir;
     const auto [signalNoisePath, noisePath] = writeSpectrumFiles(dir, 20, 5.0, 1.0);
     const sp::AppConfig config = makeMockConfig(20, 1000.0);
 
-    const sp::CalculationResult result = calculate(signalNoisePath, noisePath, config, 0,
-        sp::LineType::Symmetrical, sp::MeasurementKind::Current, 50.0);
+    const sp::CalculationResult result =
+        calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Symmetrical,
+                  sp::MeasurementKind::Current, 50.0);
 
     QCOMPARE(result.measurementType, sp::MeasurementKind::Current);
     QCOMPARE(result.points.at(0).q, 244.949);
 }
 
-void TestCalculation::clampsNegativeSignalPower()
-{
+void TestCalculation::clampsNegativeSignalPower() {
     QTemporaryDir dir;
     const auto [signalNoisePath, noisePath] = writeSpectrumFiles(dir, 20, 1.0, 2.0);
     const sp::AppConfig config = makeMockConfig();
 
-    const sp::CalculationResult result = calculate(signalNoisePath, noisePath, config, 0,
-        sp::LineType::Power, sp::MeasurementKind::Voltage, 50.0);
+    const sp::CalculationResult result =
+        calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                  sp::MeasurementKind::Voltage, 50.0);
 
     QCOMPARE(result.points.at(0).uS, 0.0);
     QCOMPARE(result.points.at(0).q, 0.0);
     QVERIFY(!result.points.at(0).isViolation);
 }
 
-void TestCalculation::validatesResistance()
-{
+void TestCalculation::validatesResistance() {
     QTemporaryDir dir;
     const auto [signalNoisePath, noisePath] = writeSpectrumFiles(dir);
     const sp::AppConfig config = makeMockConfig();
 
-    QVERIFY_EXCEPTION_THROWN(
-        calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
-            sp::MeasurementKind::Voltage, std::nullopt),
-        CalculationError);
-    QVERIFY_EXCEPTION_THROWN(
-        calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
-            sp::MeasurementKind::Voltage, 0.0),
-        CalculationError);
-    QVERIFY_EXCEPTION_THROWN(
-        calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
-            sp::MeasurementKind::Voltage, -10.0),
-        CalculationError);
+    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, std::nullopt),
+                             CalculationError);
+    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, 0.0),
+                             CalculationError);
+    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, -10.0),
+                             CalculationError);
 }
 
-void TestCalculation::validatesCategoryIndex()
-{
+void TestCalculation::validatesCategoryIndex() {
     QTemporaryDir dir;
     const auto [signalNoisePath, noisePath] = writeSpectrumFiles(dir);
     const sp::AppConfig config = makeMockConfig();
 
-    QVERIFY_EXCEPTION_THROWN(
-        calculate(signalNoisePath, noisePath, config, -1, sp::LineType::Power,
-            sp::MeasurementKind::Voltage, 50.0),
-        CalculationError);
-    QVERIFY_EXCEPTION_THROWN(
-        calculate(signalNoisePath, noisePath, config, 10, sp::LineType::Power,
-            sp::MeasurementKind::Voltage, 50.0),
-        CalculationError);
+    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, -1, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, 50.0),
+                             CalculationError);
+    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 10, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, 50.0),
+                             CalculationError);
 }
 
-void TestCalculation::validatesConstantsCountMismatch()
-{
+void TestCalculation::validatesConstantsCountMismatch() {
     QTemporaryDir dir;
     const auto [signalNoisePath, noisePath] = writeSpectrumFiles(dir);
     QVector<double> frequencies;
@@ -192,33 +182,28 @@ void TestCalculation::validatesConstantsCountMismatch()
     }
     const sp::AppConfig config = makeMockConfig(20, 2.0, 1000.0, frequencies);
 
-    QVERIFY_EXCEPTION_THROWN(
-        calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
-            sp::MeasurementKind::Voltage, 50.0),
-        CalculationError);
+    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, 50.0),
+                             CalculationError);
 }
 
-void TestCalculation::intermediateUAllLineTypes()
-{
-    for (sp::LineType lineType : {sp::LineType::Symmetrical, sp::LineType::Asymmetrical,
-             sp::LineType::Power}) {
+void TestCalculation::intermediateUAllLineTypes() {
+    for (sp::LineType lineType :
+         {sp::LineType::Symmetrical, sp::LineType::Asymmetrical, sp::LineType::Power}) {
         QCOMPARE(calculateIntermediateU(50.0, 100.0, 1.25, lineType), 1.25);
     }
 }
 
-void TestCalculation::calculateWIdentity()
-{
+void TestCalculation::calculateWIdentity() {
     QCOMPARE(calculateW(99.45), 99.45);
 }
 
-void TestCalculation::intermediateUZeroDivisionGuard()
-{
-    QVERIFY_EXCEPTION_THROWN(
-        calculateQ(5.0, 0.0, sp::MeasurementKind::Voltage, 50.0), CalculationError);
+void TestCalculation::intermediateUZeroDivisionGuard() {
+    QVERIFY_EXCEPTION_THROWN(calculateQ(5.0, 0.0, sp::MeasurementKind::Voltage, 50.0),
+                             CalculationError);
 }
 
-void TestCalculation::rejectsNegativeFrequencyConstant()
-{
+void TestCalculation::rejectsNegativeFrequencyConstant() {
     QTemporaryDir dir;
     const QString signalNoisePath = dir.filePath(QStringLiteral("signal_noise.txt"));
     const QString noisePath = dir.filePath(QStringLiteral("noise.txt"));
@@ -228,8 +213,8 @@ void TestCalculation::rejectsNegativeFrequencyConstant()
         signalNoiseLines.append(QStringLiteral("%1.0\t5.0").arg(index));
         noiseLines.append(QStringLiteral("%1.0\t1.0").arg(index));
     }
-    for (const auto &[path, lines] : {std::pair{&signalNoisePath, &signalNoiseLines},
-             std::pair{&noisePath, &noiseLines}}) {
+    for (const auto& [path, lines] :
+         {std::pair{&signalNoisePath, &signalNoiseLines}, std::pair{&noisePath, &noiseLines}}) {
         QFile file(*path);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             qFatal("cannot write %s", qPrintable(*path));
@@ -243,22 +228,19 @@ void TestCalculation::rejectsNegativeFrequencyConstant()
     }
     const sp::AppConfig config = makeMockConfig(20, 100.0, 1000.0, frequencies);
 
-    QVERIFY_EXCEPTION_THROWN(
-        calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
-            sp::MeasurementKind::Voltage, 50.0),
-        CalculationError);
+    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, 50.0),
+                             CalculationError);
 }
 
-void TestCalculation::rejectsExcessiveResistanceLimit()
-{
+void TestCalculation::rejectsExcessiveResistanceLimit() {
     QTemporaryDir dir;
     const auto [signalNoisePath, noisePath] = writeSpectrumFiles(dir);
     const sp::AppConfig config = makeMockConfig();
 
-    QVERIFY_EXCEPTION_THROWN(
-        calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
-            sp::MeasurementKind::Voltage, 1e12),
-        CalculationError);
+    QVERIFY_EXCEPTION_THROWN(calculate(signalNoisePath, noisePath, config, 0, sp::LineType::Power,
+                                       sp::MeasurementKind::Voltage, 1e12),
+                             CalculationError);
 }
 
 QTEST_APPLESS_MAIN(TestCalculation)

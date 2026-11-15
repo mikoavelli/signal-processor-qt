@@ -13,8 +13,7 @@
 
 namespace sp::ui {
 
-std::optional<QString> extractLocalFile(const QMimeData *mimeData)
-{
+std::optional<QString> extractLocalFile(const QMimeData* mimeData) {
     if (mimeData == nullptr || !mimeData->hasUrls()) {
         return std::nullopt;
     }
@@ -22,7 +21,7 @@ std::optional<QString> extractLocalFile(const QMimeData *mimeData)
     if (urls.size() != 1) {
         return std::nullopt;
     }
-    const QUrl &url = urls.constFirst();
+    const QUrl& url = urls.constFirst();
     if (!url.isLocalFile()) {
         return std::nullopt;
     }
@@ -33,44 +32,38 @@ std::optional<QString> extractLocalFile(const QMimeData *mimeData)
     return path;
 }
 
-FileDropLineEdit::FileDropLineEdit(const QString &placeholder,
-    std::function<void(const QString &)> onFileDropped, QWidget *parent)
-    : QLineEdit(parent)
-    , m_onFileDropped(std::move(onFileDropped))
-{
+FileDropLineEdit::FileDropLineEdit(const QString& placeholder,
+                                   std::function<void(const QString&)> onFileDropped,
+                                   QWidget* parent)
+    : QLineEdit(parent), m_onFileDropped(std::move(onFileDropped)) {
     setReadOnly(true);
     setPlaceholderText(placeholder);
     setAcceptDrops(true);
 }
 
-void FileDropLineEdit::setFilePath(const QString &path)
-{
+void FileDropLineEdit::setFilePath(const QString& path) {
     m_fullPath = path;
     setToolTip(m_fullPath);
     updateDisplayText();
 }
 
-void FileDropLineEdit::updateDisplayText()
-{
+void FileDropLineEdit::updateDisplayText() {
     if (m_fullPath.isEmpty()) {
         setText(QString());
         return;
     }
     const int availableWidth = qMax(10, contentsRect().width() - 12);
-    const QString elided = fontMetrics().elidedText(m_fullPath, Qt::ElideMiddle,
-        availableWidth);
+    const QString elided = fontMetrics().elidedText(m_fullPath, Qt::ElideMiddle, availableWidth);
     setText(elided);
     setCursorPosition(0);
 }
 
-void FileDropLineEdit::resizeEvent(QResizeEvent *event)
-{
+void FileDropLineEdit::resizeEvent(QResizeEvent* event) {
     QLineEdit::resizeEvent(event);
     updateDisplayText();
 }
 
-void FileDropLineEdit::dragEnterEvent(QDragEnterEvent *event)
-{
+void FileDropLineEdit::dragEnterEvent(QDragEnterEvent* event) {
     if (extractLocalFile(event->mimeData()).has_value()) {
         setStyleSheet(QStringLiteral("border: 2px dashed #2563EB;"));
         event->acceptProposedAction();
@@ -79,8 +72,7 @@ void FileDropLineEdit::dragEnterEvent(QDragEnterEvent *event)
     event->ignore();
 }
 
-void FileDropLineEdit::dragMoveEvent(QDragMoveEvent *event)
-{
+void FileDropLineEdit::dragMoveEvent(QDragMoveEvent* event) {
     if (extractLocalFile(event->mimeData()).has_value()) {
         event->acceptProposedAction();
         return;
@@ -88,14 +80,12 @@ void FileDropLineEdit::dragMoveEvent(QDragMoveEvent *event)
     event->ignore();
 }
 
-void FileDropLineEdit::dragLeaveEvent(QDragLeaveEvent *event)
-{
+void FileDropLineEdit::dragLeaveEvent(QDragLeaveEvent* event) {
     setStyleSheet(QString());
     event->accept();
 }
 
-void FileDropLineEdit::dropEvent(QDropEvent *event)
-{
+void FileDropLineEdit::dropEvent(QDropEvent* event) {
     setStyleSheet(QString());
     const std::optional<QString> filePath = extractLocalFile(event->mimeData());
     if (filePath.has_value()) {

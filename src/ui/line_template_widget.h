@@ -18,11 +18,11 @@ class LineTemplateWidget : public QWidget {
     Q_OBJECT
 
 public:
-    explicit LineTemplateWidget(QWidget *parent = nullptr);
+    explicit LineTemplateWidget(QWidget* parent = nullptr);
 
     /// @brief Sets the template to render.
     /// @param value Template string; “{}” marks a field for user input.
-    void setTemplate(const QString &value);
+    void setTemplate(const QString& value);
 
     /// @brief Clears all input fields.
     void clearInputs();
@@ -42,10 +42,10 @@ public:
 private:
     void clearLayout();
 
-    QString m_template; ///< Raw template text.
-    bool m_templateError = false; ///< @c true if the template had unbalanced braces.
-    QList<QLineEdit *> m_inputs; ///< Edits created for the “{}” fields.
-    QHBoxLayout *m_layout = nullptr; ///< Content layout.
+    QString m_template;              ///< Raw template text.
+    bool m_templateError = false;    ///< @c true if the template had unbalanced braces.
+    QList<QLineEdit*> m_inputs;      ///< Edits created for the “{}” fields.
+    QHBoxLayout* m_layout = nullptr; ///< Content layout.
 };
 
 } // namespace sp::ui

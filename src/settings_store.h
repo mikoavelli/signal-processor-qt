@@ -23,6 +23,6 @@ inline constexpr int schemaVersion = 1;
 /// @throws ConfigNotFoundError If the file does not exist.
 /// @throws ConfigValidationError If the file cannot be read, parsed, or fails
 ///     the schema and value checks.
-AppConfig loadConfig(const QString &settingsPath);
+AppConfig loadConfig(const QString& settingsPath);
 
 } // namespace sp::settings_store

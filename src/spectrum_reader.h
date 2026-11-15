@@ -21,5 +21,5 @@
 /// @throws SpectrumFormatError If the file cannot be read, contains a negative
 ///     frequency or amplitude, or two conflicting records for the same frequency.
 /// @throws SpectrumMissingFrequencyError If some control frequencies are absent.
-QVector<double> readRequiredFrequencies(const QString &filePath,
-    const QVector<double> &frequencies);
+QVector<double> readRequiredFrequencies(const QString& filePath,
+                                        const QVector<double>& frequencies);

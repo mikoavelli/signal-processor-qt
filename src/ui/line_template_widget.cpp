@@ -14,24 +14,21 @@
 
 namespace sp::ui {
 
-LineTemplateWidget::LineTemplateWidget(QWidget *parent)
-    : QWidget(parent)
-    , m_layout(new QHBoxLayout(this))
-{
+LineTemplateWidget::LineTemplateWidget(QWidget* parent)
+    : QWidget(parent), m_layout(new QHBoxLayout(this)) {
     m_layout->setContentsMargins(0, 0, 0, 0);
     m_layout->setSpacing(4);
     m_layout->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 }
 
-void LineTemplateWidget::setTemplate(const QString &value)
-{
+void LineTemplateWidget::setTemplate(const QString& value) {
     m_template = value;
     m_templateError = false;
     clearLayout();
 
     const QStringList parts = value.split(QStringLiteral("{}"));
     // After removing every valid “{}” placeholder, no brace may remain.
-    for (const QString &part : parts) {
+    for (const QString& part : parts) {
         if (part.contains(u'{') || part.contains(u'}')) {
             m_templateError = true;
             break;
@@ -46,14 +43,14 @@ void LineTemplateWidget::setTemplate(const QString &value)
     setVisible(true);
     m_layout->addWidget(new QLabel(tr_ns::tr("window.label.params"), this));
 
-    QLineEdit *previousInput = nullptr;
+    QLineEdit* previousInput = nullptr;
     for (int index = 0; index < parts.size(); ++index) {
         const QString cleanText = parts.at(index).trimmed();
         if (!cleanText.isEmpty()) {
             m_layout->addWidget(new QLabel(cleanText, this));
         }
         if (index < placeholderCount) {
-            QLineEdit *input = new QLineEdit(this);
+            QLineEdit* input = new QLineEdit(this);
             input->setFixedSize(46, 26);
             input->setAlignment(Qt::AlignCenter);
             input->setPlaceholderText(tr_ns::tr("window.params.placeholder"));
@@ -72,9 +69,8 @@ void LineTemplateWidget::setTemplate(const QString &value)
     }
 }
 
-void LineTemplateWidget::clearInputs()
-{
-    for (QLineEdit *input : std::as_const(m_inputs)) {
+void LineTemplateWidget::clearInputs() {
+    for (QLineEdit* input : std::as_const(m_inputs)) {
         input->clear();
     }
     if (!m_inputs.isEmpty()) {
@@ -82,15 +78,14 @@ void LineTemplateWidget::clearInputs()
     }
 }
 
-bool LineTemplateWidget::isValid() const
-{
+bool LineTemplateWidget::isValid() const {
     if (m_templateError) {
         return false;
     }
     if (!isVisible() || m_inputs.isEmpty()) {
         return true;
     }
-    for (const QLineEdit *input : m_inputs) {
+    for (const QLineEdit* input : m_inputs) {
         if (input->text().trimmed().isEmpty()) {
             return false;
         }
@@ -98,18 +93,16 @@ bool LineTemplateWidget::isValid() const
     return true;
 }
 
-bool LineTemplateWidget::hasTemplateError() const
-{
+bool LineTemplateWidget::hasTemplateError() const {
     return m_templateError;
 }
 
-QString LineTemplateWidget::fullName() const
-{
+QString LineTemplateWidget::fullName() const {
     if (m_templateError || !isVisible() || m_inputs.isEmpty()) {
         return m_template;
     }
     QString result = m_template;
-    for (const QLineEdit *input : m_inputs) {
+    for (const QLineEdit* input : m_inputs) {
         const qsizetype position = result.indexOf(u"{}");
         if (position < 0) {
             break;
@@ -119,12 +112,11 @@ QString LineTemplateWidget::fullName() const
     return result;
 }
 
-void LineTemplateWidget::focusFirstEmpty()
-{
+void LineTemplateWidget::focusFirstEmpty() {
     if (!isVisible()) {
         return;
     }
-    for (QLineEdit *input : std::as_const(m_inputs)) {
+    for (QLineEdit* input : std::as_const(m_inputs)) {
         if (input->text().trimmed().isEmpty()) {
             input->setFocus();
             input->selectAll();
@@ -133,15 +125,14 @@ void LineTemplateWidget::focusFirstEmpty()
     }
 }
 
-void LineTemplateWidget::clearLayout()
-{
+void LineTemplateWidget::clearLayout() {
     m_inputs.clear();
     while (m_layout->count() > 0) {
-        QLayoutItem *item = m_layout->takeAt(0);
+        QLayoutItem* item = m_layout->takeAt(0);
         if (item == nullptr) {
             continue;
         }
-        if (QWidget *widget = item->widget()) {
+        if (QWidget* widget = item->widget()) {
             widget->deleteLater();
         }
         delete item;

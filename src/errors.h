@@ -16,14 +16,11 @@ class SignalProcessorError : public std::runtime_error {
 public:
     /// @brief Creates an error with an already translated message.
     /// @param message Text shown to the user.
-    explicit SignalProcessorError(const QString &message)
-        : std::runtime_error(message.toStdString())
-        , m_message(message)
-    {
-    }
+    explicit SignalProcessorError(const QString& message)
+        : std::runtime_error(message.toStdString()), m_message(message) {}
 
     /// @brief Returns the translated message.
-    [[nodiscard]] const QString &message() const noexcept { return m_message; }
+    [[nodiscard]] const QString& message() const noexcept { return m_message; }
 
 private:
     QString m_message; ///< Translated message.
@@ -39,14 +36,11 @@ class ConfigNotFoundError final : public ConfigError {
 public:
     /// @brief Creates the error for a missing file.
     /// @param path Path of the file that could not be found.
-    explicit ConfigNotFoundError(const QString &path)
-        : ConfigError(tr_ns::tr("err.configNotFound", path))
-        , m_path(path)
-    {
-    }
+    explicit ConfigNotFoundError(const QString& path)
+        : ConfigError(tr_ns::tr("err.configNotFound", path)), m_path(path) {}
 
     /// @brief Returns the path of the missing file.
-    [[nodiscard]] const QString &path() const noexcept { return m_path; }
+    [[nodiscard]] const QString& path() const noexcept { return m_path; }
 
 private:
     QString m_path; ///< Path of the missing file.
@@ -67,14 +61,11 @@ class SpectrumNotFoundError final : public SpectrumError {
 public:
     /// @brief Creates the error for a missing file.
     /// @param path Path of the file that could not be found.
-    explicit SpectrumNotFoundError(const QString &path)
-        : SpectrumError(tr_ns::tr("err.spectrumNotFound", path))
-        , m_path(path)
-    {
-    }
+    explicit SpectrumNotFoundError(const QString& path)
+        : SpectrumError(tr_ns::tr("err.spectrumNotFound", path)), m_path(path) {}
 
     /// @brief Returns the path of the missing file.
-    [[nodiscard]] const QString &path() const noexcept { return m_path; }
+    [[nodiscard]] const QString& path() const noexcept { return m_path; }
 
 private:
     QString m_path; ///< Path of the missing file.
@@ -91,20 +82,17 @@ public:
     /// @brief Creates the error with the file name and the missing frequencies, Hz.
     /// @param filename Name of the file that lacks the frequencies.
     /// @param missingFrequencies Missing frequencies, Hz.
-    SpectrumMissingFrequencyError(const QString &filename, const QString &missing)
-        : SpectrumError(tr_ns::tr("err.spectrumMissingFrequencies", filename, missing))
-        , m_filename(filename)
-        , m_missingText(missing)
-    {
-    }
+    SpectrumMissingFrequencyError(const QString& filename, const QString& missing)
+        : SpectrumError(tr_ns::tr("err.spectrumMissingFrequencies", filename, missing)),
+          m_filename(filename), m_missingText(missing) {}
 
     /// @brief Returns the name of the file that lacks the frequencies.
-    [[nodiscard]] const QString &filename() const noexcept { return m_filename; }
+    [[nodiscard]] const QString& filename() const noexcept { return m_filename; }
     /// @brief Returns the missing frequencies as preformatted text, Hz.
-    [[nodiscard]] const QString &missingText() const noexcept { return m_missingText; }
+    [[nodiscard]] const QString& missingText() const noexcept { return m_missingText; }
 
 private:
-    QString m_filename; ///< Name of the file that lacks the frequencies.
+    QString m_filename;    ///< Name of the file that lacks the frequencies.
     QString m_missingText; ///< Preformatted list of missing frequencies.
 };
 

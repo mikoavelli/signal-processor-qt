@@ -15,21 +15,19 @@
 
 namespace sp::ui {
 
-StartupDialog::StartupDialog(QWidget *parent)
-    : QDialog(parent)
-    , m_deviceName(new QLineEdit(tr_ns::tr("dialog.startup.defaultDevice"), this))
-    , m_category(new QComboBox(this))
-{
+StartupDialog::StartupDialog(QWidget* parent)
+    : QDialog(parent), m_deviceName(new QLineEdit(tr_ns::tr("dialog.startup.defaultDevice"), this)),
+      m_category(new QComboBox(this)) {
     setWindowTitle(tr_ns::tr("dialog.startup.title"));
     setFixedWidth(400);
 
-    auto *layout = new QVBoxLayout(this);
+    auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(18, 18, 18, 18);
     layout->setSpacing(14);
 
     layout->addWidget(new QLabel(tr_ns::tr("dialog.startup.info"), this));
 
-    auto *form = new QFormLayout();
+    auto* form = new QFormLayout();
     form->setSpacing(10);
 
     for (int category = 1; category <= 3; ++category) {
@@ -40,9 +38,9 @@ StartupDialog::StartupDialog(QWidget *parent)
     form->addRow(new QLabel(tr_ns::tr("dialog.startup.category"), this), m_category);
     layout->addLayout(form);
 
-    auto *buttons = new QHBoxLayout();
-    auto *cancel = new QPushButton(tr_ns::tr("dialog.startup.cancel"), this);
-    auto *start = new QPushButton(tr_ns::tr("dialog.startup.start"), this);
+    auto* buttons = new QHBoxLayout();
+    auto* cancel = new QPushButton(tr_ns::tr("dialog.startup.cancel"), this);
+    auto* start = new QPushButton(tr_ns::tr("dialog.startup.start"), this);
     buttons->addStretch();
     buttons->addWidget(cancel);
     buttons->addWidget(start);
@@ -52,18 +50,16 @@ StartupDialog::StartupDialog(QWidget *parent)
     connect(start, &QPushButton::clicked, this, &StartupDialog::onStart);
 }
 
-void StartupDialog::onStart()
-{
+void StartupDialog::onStart() {
     if (m_deviceName->text().trimmed().isEmpty()) {
         QMessageBox::warning(this, tr_ns::tr("dialog.startup.warning.title"),
-            tr_ns::tr("dialog.startup.warning.emptyDevice"));
+                             tr_ns::tr("dialog.startup.warning.emptyDevice"));
         return;
     }
     accept();
 }
 
-std::pair<QString, int> StartupDialog::parameters() const
-{
+std::pair<QString, int> StartupDialog::parameters() const {
     return {m_deviceName->text().trimmed(), m_category->currentIndex()};
 }
 

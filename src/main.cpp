@@ -22,18 +22,17 @@
 /// @brief Initialises measurements.db next to the executable, falling back to a
 /// per-user writable location when the executable's directory is not writable
 /// (e.g. C:\ root or Program Files). Returns the path actually used.
-static QString initializeMeasurementsDatabase(const QString &baseDir)
-{
+static QString initializeMeasurementsDatabase(const QString& baseDir) {
     const QString adjacent = QDir(baseDir).filePath(QStringLiteral("measurements.db"));
     try {
         initDatabase(adjacent);
         return adjacent;
-    } catch (const DatabaseError &) {
+    } catch (const DatabaseError&) {
         // Fallback: per-user data directory (%LOCALAPPDATA%/SignalProcessor on
         // Windows, ~/.local/share/SignalProcessor on Linux). Preserve an
         // existing adjacent database by copying it over if possible.
-        const QString dir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)
-            + QStringLiteral("/SignalProcessor");
+        const QString dir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) +
+                            QStringLiteral("/SignalProcessor");
         QDir().mkpath(dir);
         const QString fallback = QDir(dir).filePath(QStringLiteral("measurements.db"));
         if (!QFileInfo::exists(fallback) && QFileInfo::exists(adjacent)) {
@@ -44,9 +43,7 @@ static QString initializeMeasurementsDatabase(const QString &baseDir)
     }
 }
 
-
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
     QApplication::setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
     app.setFont(QFont(QStringLiteral("Segoe UI"), 9));
@@ -63,8 +60,8 @@ int main(int argc, char *argv[])
     // error message is produced.
     static_cast<void>(tr_ns::tr("window.title"));
 
-    const QString settingsPath = QDir(baseDir).filePath(
-        QString::fromUtf8(sp::settings_store::settingsName));
+    const QString settingsPath =
+        QDir(baseDir).filePath(QString::fromUtf8(sp::settings_store::settingsName));
 
     try {
         const sp::AppConfig config = sp::settings_store::loadConfig(settingsPath);
@@ -78,14 +75,14 @@ int main(int argc, char *argv[])
         sp::ui::MainWindow window(config, deviceName, categoryIndex, databasePath);
         window.show();
         return app.exec();
-    } catch (const ConfigNotFoundError &error) {
+    } catch (const ConfigNotFoundError& error) {
         QMessageBox::critical(nullptr, tr_ns::tr("startup.settingsNotFound.title"),
-            tr_ns::tr("startup.settingsNotFound.text", error.path()));
+                              tr_ns::tr("startup.settingsNotFound.text", error.path()));
         return 1;
-    } catch (const ConfigError &error) {
+    } catch (const ConfigError& error) {
         QMessageBox::critical(nullptr, tr_ns::tr("startup.settingsError.title"), error.message());
         return 1;
-    } catch (const DatabaseError &error) {
+    } catch (const DatabaseError& error) {
         QMessageBox::critical(nullptr, tr_ns::tr("startup.databaseError.title"), error.message());
         return 1;
     }

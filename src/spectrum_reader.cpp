@@ -20,8 +20,7 @@ using Qt::Literals::StringLiterals::operator""_s;
 namespace {
 
 /// @brief Formats a frequency without trailing zeros for messages (Hz).
-QString formatFrequency(double frequency)
-{
+QString formatFrequency(double frequency) {
     QString text = QString::number(frequency, 'f', 4);
     while (text.endsWith(u'0')) {
         text.chop(1);
@@ -34,9 +33,8 @@ QString formatFrequency(double frequency)
 
 } // namespace
 
-QVector<double> readRequiredFrequencies(const QString &filePath,
-    const QVector<double> &frequencies)
-{
+QVector<double> readRequiredFrequencies(const QString& filePath,
+                                        const QVector<double>& frequencies) {
     if (frequencies.isEmpty()) {
         throw CalculationError(tr_ns::tr("err.spectrumEmptyFrequencies"));
     }
@@ -59,8 +57,7 @@ QVector<double> readRequiredFrequencies(const QString &filePath,
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        throw SpectrumFormatError(
-            tr_ns::tr("err.spectrumReadError", fileName, file.errorString()));
+        throw SpectrumFormatError(tr_ns::tr("err.spectrumReadError", fileName, file.errorString()));
     }
     // The spectrum files are ASCII-compatible; fromUtf8 replaces any invalid
     // bytes lossily, like errors="replace" in the reference implementation.
@@ -103,8 +100,8 @@ QVector<double> readRequiredFrequencies(const QString &filePath,
         }
         const auto foundIt = found.constFind(frequency);
         if (foundIt != found.constEnd() && !qFuzzyIsNull(foundIt.value() - voltageValue)) {
-            throw SpectrumFormatError(tr_ns::tr("err.spectrumDuplicate", fileName,
-                formatFrequency(frequency)));
+            throw SpectrumFormatError(
+                tr_ns::tr("err.spectrumDuplicate", fileName, formatFrequency(frequency)));
         }
         found.insert(frequency, voltageValue);
     }

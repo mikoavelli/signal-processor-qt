@@ -14,21 +14,18 @@
 #include <QtMath>
 #include <cmath>
 
-
 namespace {
 
 /// @brief Upper bound of R, ohm: above it the model does not apply.
 inline constexpr double maxResistanceOhm = 1e9;
 
 /// @brief Rounds to four decimals, like round(x, 4) in the reference implementation.
-double round4(double value)
-{
+double round4(double value) {
     return std::round(value * 1e4) / 1e4;
 }
 
 /// @brief Computes the signal level from the mixture and the own noise.
-double computeSignalLevel(double signalNoise, double noise)
-{
+double computeSignalLevel(double signalNoise, double noise) {
     const double signalPower = signalNoise * signalNoise - noise * noise;
     if (signalPower <= 0.0) {
         return 0.0;
@@ -37,8 +34,7 @@ double computeSignalLevel(double signalNoise, double noise)
 }
 
 /// @brief Computes the r_i coefficient of a single violating point.
-double computePointRI(double q, double deltaA, double frequency)
-{
+double computePointRI(double q, double deltaA, double frequency) {
     const double logFactor = std::log(1.0 + frequency);
     const double scaledQ = q * deltaA;
     return round4(scaledQ * scaledQ * logFactor);
@@ -47,22 +43,20 @@ double computePointRI(double q, double deltaA, double frequency)
 } // namespace
 
 double calculateIntermediateU(double resistance, double deltaF, double normNoise,
-    sp::LineType lineType)
-{
+                              sp::LineType lineType) {
     Q_UNUSED(resistance);
     Q_UNUSED(deltaF);
     switch (lineType) {
-    case sp::LineType::Symmetrical:
-    case sp::LineType::Asymmetrical:
-    case sp::LineType::Power:
-        return normNoise;
+        case sp::LineType::Symmetrical:
+        case sp::LineType::Asymmetrical:
+        case sp::LineType::Power:
+            return normNoise;
     }
     return normNoise; // unreachable: all enumerators are handled
 }
 
 double calculateQ(double signalLevel, double intermediateU, sp::MeasurementKind measurementType,
-    double resistance)
-{
+                  double resistance) {
     if (intermediateU <= 0.0) {
         // The reference implementation returned 0 here; the guarded behaviour is
         // an explicit error: dividing by a non-positive norm is meaningless.
@@ -75,15 +69,14 @@ double calculateQ(double signalLevel, double intermediateU, sp::MeasurementKind 
     return signalLevel / intermediateU;
 }
 
-double calculateW(double rSum)
-{
+double calculateW(double rSum) {
     return rSum;
 }
 
-sp::CalculationResult calculate(const QString &signalNoisePath, const QString &noisePath,
-    const sp::AppConfig &config, int categoryIndex, sp::LineType lineType,
-    sp::MeasurementKind measurementType, std::optional<double> resistance)
-{
+sp::CalculationResult calculate(const QString& signalNoisePath, const QString& noisePath,
+                                const sp::AppConfig& config, int categoryIndex,
+                                sp::LineType lineType, sp::MeasurementKind measurementType,
+                                std::optional<double> resistance) {
     // ------------------------------------------------------------------
     // Validate the inputs.
     // ------------------------------------------------------------------
@@ -95,33 +88,37 @@ sp::CalculationResult calculate(const QString &signalNoisePath, const QString &n
         throw CalculationError(tr_ns::tr("err.resistanceNotPositive"));
     }
     if (validResistance > maxResistanceOhm) {
-        throw CalculationError(tr_ns::tr("err.resistanceTooLarge",
-            QString::number(maxResistanceOhm, 'f', 0)));
+        throw CalculationError(
+            tr_ns::tr("err.resistanceTooLarge", QString::number(maxResistanceOhm, 'f', 0)));
     }
 
-    const sp::FrequencyConstantsConfig &constants = config.frequencyConstants;
+    const sp::FrequencyConstantsConfig& constants = config.frequencyConstants;
     const int numberOfConstants = constants.numberOfConstants;
     if (numberOfConstants <= 0) {
         throw CalculationError(tr_ns::tr("err.numberOfConstantsNotPositive"));
     }
-    const QVector<double> &lineNoiseValues = sp::lineNoise(config.normNoiseByLine, lineType);
+    const QVector<double>& lineNoiseValues = sp::lineNoise(config.normNoiseByLine, lineType);
     if (lineNoiseValues.size() != numberOfConstants) {
-        throw CalculationError(tr_ns::tr("err.lineNoiseCountMismatch", QString::number(numberOfConstants)));
+        throw CalculationError(
+            tr_ns::tr("err.lineNoiseCountMismatch", QString::number(numberOfConstants)));
     }
-    if (constants.fI.size() != numberOfConstants || constants.deltaFI.size() != numberOfConstants
-        || constants.kI.size() != numberOfConstants || constants.deltaAI.size() != numberOfConstants) {
-        throw CalculationError(tr_ns::tr("err.constantsCountMismatch", QString::number(numberOfConstants)));
+    if (constants.fI.size() != numberOfConstants || constants.deltaFI.size() != numberOfConstants ||
+        constants.kI.size() != numberOfConstants || constants.deltaAI.size() != numberOfConstants) {
+        throw CalculationError(
+            tr_ns::tr("err.constantsCountMismatch", QString::number(numberOfConstants)));
     }
     for (int index = 0; index < numberOfConstants; ++index) {
         if (constants.fI.at(index) < 0.0) {
-            throw CalculationError(tr_ns::tr("err.negativeFrequencyConstant", QString::number(index + 1)));
+            throw CalculationError(
+                tr_ns::tr("err.negativeFrequencyConstant", QString::number(index + 1)));
         }
     }
 
-    const sp::NormParamsConfig &normParams = config.normParams;
-    if (categoryIndex < 0 || categoryIndex >= normParams.deltaStn.size()
-        || categoryIndex >= normParams.wN.size()) {
-        throw CalculationError(tr_ns::tr("err.categoryMissing", QString::number(categoryIndex + 1)));
+    const sp::NormParamsConfig& normParams = config.normParams;
+    if (categoryIndex < 0 || categoryIndex >= normParams.deltaStn.size() ||
+        categoryIndex >= normParams.wN.size()) {
+        throw CalculationError(
+            tr_ns::tr("err.categoryMissing", QString::number(categoryIndex + 1)));
     }
     const double deltaStn = normParams.deltaStn.at(categoryIndex);
     const double wN = normParams.wN.at(categoryIndex);
@@ -140,13 +137,14 @@ sp::CalculationResult calculate(const QString &signalNoisePath, const QString &n
     bool hasViolations = false;
     for (int index = 0; index < numberOfConstants; ++index) {
         const double signalLevel = computeSignalLevel(snValues.at(index), nValues.at(index));
-        const double intermediateU = calculateIntermediateU(validResistance,
-            constants.deltaFI.at(index), lineNoiseValues.at(index), lineType);
+        const double intermediateU = calculateIntermediateU(
+            validResistance, constants.deltaFI.at(index), lineNoiseValues.at(index), lineType);
         double q = 0.0;
         try {
             q = calculateQ(signalLevel, intermediateU, measurementType, validResistance);
-        } catch (const CalculationError &) {
-            throw CalculationError(tr_ns::tr("err.intermediateNotPositive", QString::number(index + 1)));
+        } catch (const CalculationError&) {
+            throw CalculationError(
+                tr_ns::tr("err.intermediateNotPositive", QString::number(index + 1)));
         }
         sp::MeasurementPoint point;
         point.index = index + 1;
@@ -178,7 +176,7 @@ sp::CalculationResult calculate(const QString &signalNoisePath, const QString &n
 
     double rWeightedSum = 0.0;
     for (int index = 0; index < points.size(); ++index) {
-        sp::MeasurementPoint &point = points[index];
+        sp::MeasurementPoint& point = points[index];
         const double rI = computePointRI(point.q, constants.deltaAI.at(index), point.f);
         rWeightedSum += rI * constants.kI.at(index);
         point.rI = rI;

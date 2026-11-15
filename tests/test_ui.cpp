@@ -29,8 +29,7 @@ private slots:
     void lineTemplateWidgetRejectsUnbalancedBraces();
 };
 
-void TestUi::extractLocalFileSuccess()
-{
+void TestUi::extractLocalFileSuccess() {
     QTemporaryDir dir;
     const QString path = dir.filePath(QStringLiteral("file.txt"));
     {
@@ -45,20 +44,18 @@ void TestUi::extractLocalFileSuccess()
     QCOMPARE(extracted.value(), QFileInfo(path).absoluteFilePath());
 }
 
-void TestUi::extractLocalFileRejectsDirectory()
-{
+void TestUi::extractLocalFileRejectsDirectory() {
     QTemporaryDir dir;
     QMimeData mimeData;
     mimeData.setUrls({QUrl::fromLocalFile(dir.path())});
     QVERIFY(!sp::ui::extractLocalFile(&mimeData).has_value());
 }
 
-void TestUi::extractLocalFileRejectsMultipleUrls()
-{
+void TestUi::extractLocalFileRejectsMultipleUrls() {
     QTemporaryDir dir;
     const QString first = dir.filePath(QStringLiteral("1.txt"));
     const QString second = dir.filePath(QStringLiteral("2.txt"));
-    for (const QString &path : {first, second}) {
+    for (const QString& path : {first, second}) {
         QFile file(path);
         QVERIFY(file.open(QIODevice::WriteOnly));
         file.write("a");
@@ -68,8 +65,7 @@ void TestUi::extractLocalFileRejectsMultipleUrls()
     QVERIFY(!sp::ui::extractLocalFile(&mimeData).has_value());
 }
 
-void TestUi::doubleValidatorLocaleCommaAndDot()
-{
+void TestUi::doubleValidatorLocaleCommaAndDot() {
     sp::ui::DoubleValidator validator(0.0, 1000.0, 4);
     int pos = 0;
     QString dot = QStringLiteral("50.25");
@@ -78,16 +74,14 @@ void TestUi::doubleValidatorLocaleCommaAndDot()
     QCOMPARE(validator.validate(comma, pos), QValidator::Acceptable);
 }
 
-void TestUi::doubleValidatorRejectsOutOfRangeMaximum()
-{
+void TestUi::doubleValidatorRejectsOutOfRangeMaximum() {
     sp::ui::DoubleValidator validator(0.0, 100.0, 2);
     int pos = 0;
     QString input = QStringLiteral("9999.99");
     QCOMPARE(validator.validate(input, pos), QValidator::Invalid);
 }
 
-void TestUi::tableModelRowAndColumnCounts()
-{
+void TestUi::tableModelRowAndColumnCounts() {
     sp::ui::MeasurementTableModel model;
     QCOMPARE(model.columnCount(), 0);
     QCOMPARE(model.rowCount(), 0);
@@ -107,7 +101,7 @@ void TestUi::tableModelRowAndColumnCounts()
     QCOMPARE(model.columnCount(), 7);
     QCOMPARE(model.rowCount(), 1);
     QCOMPARE(model.headerData(3, Qt::Horizontal, Qt::DisplayRole).toString(),
-        QStringLiteral("U_сш"));
+             QStringLiteral("U_сш"));
 
     const QColor color = model.data(model.index(0, 6), Qt::BackgroundRole).value<QColor>();
     QCOMPARE(color, QColor(QStringLiteral("#FEE2E2")));
@@ -117,8 +111,7 @@ void TestUi::tableModelRowAndColumnCounts()
     QCOMPARE(model.rowCount(), 0);
 }
 
-void TestUi::lineTemplateWidgetLifecycle()
-{
+void TestUi::lineTemplateWidgetLifecycle() {
     sp::ui::LineTemplateWidget widget;
     widget.setTemplate(QStringLiteral("ЛВС {} - {}"));
     QVERIFY(!widget.isValid());
@@ -127,8 +120,7 @@ void TestUi::lineTemplateWidgetLifecycle()
     widget.clearInputs();
 }
 
-void TestUi::lineTemplateWidgetRejectsUnbalancedBraces()
-{
+void TestUi::lineTemplateWidgetRejectsUnbalancedBraces() {
     // Templates with unbalanced braces must be rejected.
     sp::ui::LineTemplateWidget widget;
     widget.setTemplate(QStringLiteral("Line {param"));
@@ -136,8 +128,7 @@ void TestUi::lineTemplateWidgetRejectsUnbalancedBraces()
     QVERIFY(widget.hasTemplateError());
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
     TestUi test;
     return QTest::qExec(&test, argc, argv);
