@@ -19,14 +19,17 @@
 
 int main(int argc, char *argv[])
 {
+    QApplication app(argc, argv);
+    QApplication::setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
+    app.setFont(QFont(QStringLiteral("Segoe UI"), 9));
+
+    // NOTE: applicationDirPath() must be called after the QApplication exists,
+    // otherwise it returns an empty string and every path derived from it is
+    // resolved against the (unpredictable) working directory.
     // The starting folder is the one with settings.json: the configuration
     // file always sits next to the binary.
     const QString baseDir = QCoreApplication::applicationDirPath();
     QDir::setCurrent(baseDir);
-
-    QApplication app(argc, argv);
-    QApplication::setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
-    app.setFont(QFont(QStringLiteral("Segoe UI"), 9));
 
     // The translation is compiled into the binary; initialise it before any
     // error message is produced.
